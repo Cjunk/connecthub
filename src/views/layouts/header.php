@@ -9,8 +9,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- CLEAN CSS ONLY -->
-    <link href="<?php echo BASE_URL; ?>/assets/css/clean-style.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <?php if (file_exists(ROOT_PATH . '/assets/css/clean-style.css')): ?>
+        <link href="<?php echo BASE_URL; ?>/../assets/css/clean-style.css" rel="stylesheet">
+    <?php endif; ?>
     
     <?php if (isset($additionalCSS)): ?>
         <?php foreach ($additionalCSS as $css): ?>
@@ -33,10 +35,10 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>/under-construction.php">Events</a>
+                        <a class="nav-link" href="<?php echo BASE_URL; ?>/events.php">Events</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>/under-construction.php">Groups</a>
+                        <a class="nav-link" href="<?php echo BASE_URL; ?>/groups.php">Groups</a>
                     </li>
                     <?php if (isLoggedIn()): ?>
                         <li class="nav-item">

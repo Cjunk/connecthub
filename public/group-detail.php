@@ -319,7 +319,10 @@ $pageTitle = $group['name'];
                             <a href="<?php echo BASE_URL; ?>/manage-group.php?slug=<?php echo htmlspecialchars($slug); ?>" class="btn btn-warning">
                                 <i class="fas fa-cog me-2"></i>Manage Group
                             </a>
-                            <a href="<?php echo BASE_URL; ?>/under-construction.php" class="btn btn-primary">
+                        <?php endif; ?>
+                        
+                        <?php if ($userRole === 'owner' || $userRole === 'co_host' || $userRole === 'moderator'): ?>
+                            <a href="<?php echo BASE_URL; ?>/create-event.php?group_id=<?php echo $group['id']; ?>" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>Create Event
                             </a>
                             

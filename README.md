@@ -1,6 +1,24 @@
-# ConnectHub 🌐
+# ConnectHub### ✅ **Currently Available**
+- **User Authentication & Authorization** - Secure registration, login with role-based access
+- **Advanced Group Management** - Complete group system with ownership hierarchy
+  - Owner/Co-Host/Moderator/Member role management
+  - Group creation, joining, and management with permissions
+  - Visual role indicators and promotion/demotion system
+- **Event Management System** - Full event creation and management
+  - Event creation with cover image upload
+  - Location types: In-person, Online, Hybrid
+  - RSVP system architecture with attendee tracking
+  - Role-based event creation permissions
+- **Payment System** - Stripe integration for membership payments (test mode complete)
+- **Database Integration** - PostgreSQL with secure connection handling
+- **Responsive Design** - Mobile-first, desktop-optimized interface
+- **Flash Messaging** - User feedback system with elegant notifications
 
-A modern, community-driven platform inspired by Meetup.com, built with PHP and designed for secure, professional event management and group networking.
+### 🔄 **In Development**
+- **Event RSVP Interface** - User-facing RSVP and event browsing
+- **User Profiles** - Comprehensive profile management and customization
+- **Admin Dashboard** - Complete administrative control panel
+- **Email Notifications** - Automated event reminders and updatesn, community-driven platform inspired by Meetup.com, built with PHP and designed for secure, professional event management and group networking.
 
 ![ConnectHub](https://img.shields.io/badge/Status-In%20Development-yellow)
 ![PHP](https://img.shields.io/badge/PHP-8.0%2B-blue)
@@ -42,14 +60,15 @@ A modern, community-driven platform inspired by Meetup.com, built with PHP and d
 
 ## 📊 Development Progress
 
-**Overall: ~30% Complete**
+**Overall: ~65% Complete**
 
 - ✅ **Foundation & Setup** (100%)
 - ✅ **Payment System** (90% - Test mode complete)
 - ✅ **User Management** (75% - Auth complete, profiles pending)
-- ✅ **UI/UX** (80% - Responsive design complete)
-- ❌ **Groups & Events** (0% - Next priority)
-- ❌ **Administration** (0% - Planned)
+- ✅ **Group Management** (95% - Complete with advanced role hierarchy)
+- ✅ **Event Management** (85% - Creation and backend complete, RSVP UI pending)
+- ✅ **UI/UX** (85% - Responsive design complete, event interfaces done)
+- ❌ **Administration** (25% - Basic user management done)
 - ❌ **Communication** (0% - Planned)
 
 ## � Getting Started

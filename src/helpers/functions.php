@@ -3,6 +3,9 @@
  * Utility Functions
  */
 
+// Load required models
+require_once __DIR__ . '/../models/User.php';
+
 /**
  * Sanitize input data
  */

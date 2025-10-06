@@ -435,6 +435,16 @@ class Group {
     }
     
     /**
+     * Check if user can create events in this group
+     */
+    public function canUserCreateEvents($userId, $groupId) {
+        $role = $this->getUserRole($groupId, $userId);
+        
+        // Only owners, co-hosts, and moderators can create events
+        return in_array($role, ['owner', 'co_host', 'moderator']);
+    }
+    
+    /**
      * Get group activity log
      */
     public function getActivityLog($groupId, $limit = 20) {

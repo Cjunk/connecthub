@@ -22,14 +22,14 @@ $pageTitle = 'Welcome to ConnectHub';
                         <a href="<?php echo BASE_URL; ?>/register.php" class="btn btn-light btn-lg">
                             <i class="fas fa-user-plus me-2"></i>Join ConnectHub
                         </a>
-                        <a href="<?php echo BASE_URL; ?>/under-construction.php" class="btn btn-outline-light btn-lg">
+                        <a href="<?php echo BASE_URL; ?>/events.php" class="btn btn-outline-light btn-lg">
                             <i class="fas fa-calendar me-2"></i>Browse Events
                         </a>
                     <?php else: ?>
                         <a href="<?php echo BASE_URL; ?>/dashboard.php" class="btn btn-light btn-lg">
                             <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
                         </a>
-                        <a href="<?php echo BASE_URL; ?>/under-construction.php" class="btn btn-outline-light btn-lg">
+                        <a href="<?php echo BASE_URL; ?>/events.php" class="btn btn-outline-light btn-lg">
                             <i class="fas fa-calendar me-2"></i>Find Events
                         </a>
                     <?php endif; ?>
