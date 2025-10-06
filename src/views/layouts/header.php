@@ -11,8 +11,37 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <?php if (file_exists(ROOT_PATH . '/assets/css/clean-style.css')): ?>
-        <link href="<?php echo BASE_URL; ?>/../assets/css/clean-style.css" rel="stylesheet">
+        <link href="<?php echo BASE_URL; ?>/assets/css/clean-style.css" rel="stylesheet">
     <?php endif; ?>
+    
+    <!-- Ensure background texture loads -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+            background-attachment: fixed !important;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 99, 132, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(54, 162, 235, 0.03) 0%, transparent 50%);
+            background-size: 400px 400px, 300px 300px, 500px 500px;
+            animation: subtleMove 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+        @keyframes subtleMove {
+            0%, 100% { background-position: 0 0, 100px 100px, 200px 200px; }
+            50% { background-position: 50px 50px, 150px 150px, 250px 250px; }
+        }
+    </style>
     
     <?php if (isset($additionalCSS)): ?>
         <?php foreach ($additionalCSS as $css): ?>
