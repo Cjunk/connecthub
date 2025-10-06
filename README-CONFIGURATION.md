@@ -4,7 +4,7 @@
 
 ### **For Local Development:**
 - ✅ Use the current setup - `config/local_config.php` is automatically loaded
-- ✅ URLs point to `http://localhost/connecthub/public`
+- ✅ URLs point to `http://localhost`
 - ✅ Database uses local settings (root/empty password)
 - ✅ Debug mode enabled
 
@@ -32,7 +32,7 @@
 ## 🔧 **Current Configuration:**
 
 ### **Local Development (Active):**
-- **BASE_URL:** `http://localhost/connecthub/public`
+- **BASE_URL:** `http://localhost`
 - **Environment:** Development
 - **Debug:** Enabled
 - **Database:** Local (connecthub/root)

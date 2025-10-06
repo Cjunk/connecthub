@@ -23,7 +23,7 @@ if (!defined('APP_DEBUG')) define('APP_DEBUG', true); // Use config file value i
 define('APP_TIMEZONE', 'UTC');
 
 // URL Settings - Use config file values if available, otherwise use environment variables or defaults
-if (!defined('BASE_URL')) define('BASE_URL', $_ENV['BASE_URL'] ?? 'http://localhost/connecthub/public');
+if (!defined('BASE_URL')) define('BASE_URL', $_ENV['BASE_URL'] ?? 'http://localhost');
 if (!defined('SITE_URL')) define('SITE_URL', $_ENV['SITE_URL'] ?? 'http://localhost/connecthub');
 
 // File Paths

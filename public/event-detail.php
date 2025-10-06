@@ -17,7 +17,7 @@ $success = '';
 // Get event slug from URL
 $slug = $_GET['slug'] ?? '';
 if (empty($slug)) {
-    header('Location: /connecthub/public/events.php');
+    header('Location: /events.php');
     exit;
 }
 
@@ -25,7 +25,7 @@ if (empty($slug)) {
 $eventData = $event->getBySlug($slug);
 if (!$eventData) {
     $_SESSION['error'] = "Event not found.";
-    header('Location: /connecthub/public/events.php');
+    header('Location: /events.php');
     exit;
 }
 
@@ -39,7 +39,7 @@ if (isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'rsvp') {
     if (!isset($_SESSION['user_id'])) {
         $_SESSION['error'] = "Please log in to RSVP to events.";
-        header('Location: /connecthub/public/login.php');
+        header('Location: /login.php');
         exit;
     }
     
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     
     if ($event->rsvp($eventData['id'], $_SESSION['user_id'], $rsvpStatus, $notes)) {
         $_SESSION['success'] = "Your RSVP has been updated!";
-        header('Location: /connecthub/public/event-detail.php?slug=' . $slug);
+        header('Location: /event-detail.php?slug=' . $slug);
         exit;
     } else {
         $errors[] = "Failed to update RSVP. Please try again.";
@@ -79,7 +79,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
     <div class="row">
         <div class="col-12">
             <div class="d-flex align-items-center mb-4">
-                <a href="/connecthub/public/group-detail.php?slug=<?= htmlspecialchars($eventData['group_slug']) ?>" 
+                <a href="/group-detail.php?slug=<?= htmlspecialchars($eventData['group_slug']) ?>" 
                    class="btn btn-outline-secondary me-3">
                     <i class="fas fa-arrow-left"></i> Back to Group
                 </a>
@@ -95,10 +95,10 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                             <i class="fas fa-cog"></i> Manage
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/connecthub/public/edit-event.php?id=<?= $eventData['id'] ?>">
+                            <li><a class="dropdown-item" href="/edit-event.php?id=<?= $eventData['id'] ?>">
                                 <i class="fas fa-edit"></i> Edit Event
                             </a></li>
-                            <li><a class="dropdown-item" href="/connecthub/public/event-attendees.php?id=<?= $eventData['id'] ?>">
+                            <li><a class="dropdown-item" href="/event-attendees.php?id=<?= $eventData['id'] ?>">
                                 <i class="fas fa-users"></i> View Attendees
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -259,7 +259,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                         <?php if (!isset($_SESSION['user_id'])): ?>
                             <h5 class="card-title">Join This Event</h5>
                             <p class="text-muted">Please log in to RSVP to this event.</p>
-                            <a href="/connecthub/public/login.php" class="btn btn-primary w-100">
+                            <a href="/login.php" class="btn btn-primary w-100">
                                 <i class="fas fa-sign-in-alt"></i> Log In to RSVP
                             </a>
                         <?php else: ?>
@@ -372,7 +372,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                         </div>
                         
                         <?php if ($canManage): ?>
-                            <a href="/connecthub/public/event-attendees.php?id=<?= $eventData['id'] ?>" 
+                            <a href="/event-attendees.php?id=<?= $eventData['id'] ?>" 
                                class="btn btn-sm btn-outline-primary w-100 mt-3">
                                 View All Attendees
                             </a>
@@ -389,7 +389,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
 function confirmCancelEvent() {
     if (confirm('Are you sure you want to cancel this event? This action cannot be undone.')) {
         // Add cancel event functionality here
-        window.location.href = '/connecthub/public/cancel-event.php?id=<?= $eventData['id'] ?>';
+        window.location.href = '/cancel-event.php?id=<?= $eventData['id'] ?>';
     }
 }
 </script>

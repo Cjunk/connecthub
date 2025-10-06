@@ -65,7 +65,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                     <p class="text-muted mb-0">Discover and join interesting events in your community</p>
                 </div>
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <a href="/connecthub/public/groups.php" class="btn btn-primary">
+                    <a href="/groups.php" class="btn btn-primary">
                         <i class="fas fa-users"></i> Browse Groups
                     </a>
                 <?php endif; ?>
@@ -115,7 +115,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-search"></i> Search
                                 </button>
-                                <a href="/connecthub/public/events.php" class="btn btn-outline-secondary">
+                                <a href="/events.php" class="btn btn-outline-secondary">
                                     <i class="fas fa-times"></i> Clear
                                 </a>
                             </div>
@@ -153,7 +153,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                         <?php endif; ?>
                     </p>
                     <?php if (isset($_SESSION['user_id'])): ?>
-                        <a href="/connecthub/public/groups.php" class="btn btn-primary">
+                        <a href="/groups.php" class="btn btn-primary">
                             <i class="fas fa-users"></i> Join Groups to See Their Events
                         </a>
                     <?php endif; ?>
@@ -172,7 +172,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                                 </div>
                                 <div class="flex-grow-1">
                                     <h5 class="card-title mb-1">
-                                        <a href="/connecthub/public/event-detail.php?slug=<?= htmlspecialchars($eventItem['slug']) ?>" 
+                                        <a href="/event-detail.php?slug=<?= htmlspecialchars($eventItem['slug']) ?>" 
                                            class="text-decoration-none">
                                             <?= htmlspecialchars($eventItem['title']) ?>
                                         </a>
@@ -225,12 +225,12 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                             <!-- Action Buttons -->
                             <div class="mt-auto">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <a href="/connecthub/public/event-detail.php?slug=<?= htmlspecialchars($eventItem['slug']) ?>" 
+                                    <a href="/event-detail.php?slug=<?= htmlspecialchars($eventItem['slug']) ?>" 
                                        class="btn btn-primary btn-sm">
                                         <i class="fas fa-eye"></i> View Details
                                     </a>
                                     
-                                    <a href="/connecthub/public/group-detail.php?slug=<?= htmlspecialchars($eventItem['group_slug']) ?>" 
+                                    <a href="/group-detail.php?slug=<?= htmlspecialchars($eventItem['group_slug']) ?>" 
                                        class="btn btn-outline-secondary btn-sm">
                                         <i class="fas fa-users"></i> View Group
                                     </a>

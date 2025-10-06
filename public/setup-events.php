@@ -104,10 +104,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['setup'])) {
                             </div>
                             
                             <div class="mt-4">
-                                <a href="http://localhost/connecthub/public/events.php" class="btn btn-primary me-2">
+                                <a href="http://localhost/events.php" class="btn btn-primary me-2">
                                     <i class="fas fa-calendar me-2"></i>View Events
                                 </a>
-                                <a href="http://localhost/connecthub/public/groups.php" class="btn btn-outline-primary">
+                                <a href="http://localhost/groups.php" class="btn btn-outline-primary">
                                     <i class="fas fa-users me-2"></i>View Groups
                                 </a>
                             </div>

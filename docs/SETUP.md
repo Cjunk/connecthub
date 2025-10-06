@@ -23,7 +23,7 @@ define('DB_USER_LOCAL', 'root');
 define('DB_PASS_LOCAL', '');
 
 // URLs - Update for your local setup
-define('BASE_URL_LOCAL', 'http://localhost/connecthub/public');
+define('BASE_URL_LOCAL', 'http://localhost');
 define('SITE_URL_LOCAL', 'http://localhost/connecthub');
 
 // Email - Use Mailtrap or similar for development
@@ -55,7 +55,7 @@ mysql -u root -p connecthub_dev < database/seeds.sql
 
 #### Using XAMPP/WAMP
 1. Copy project to `htdocs/connecthub`
-2. Access via `http://localhost/connecthub/public`
+2. Access via `http://localhost`
 
 #### Using Built-in PHP Server
 ```bash
@@ -64,7 +64,7 @@ php -S localhost:8000
 ```
 
 ### 5. Test the Installation
-1. Visit `http://localhost/connecthub/public` (or `http://localhost:8000`)
+1. Visit `http://localhost` (or `http://localhost:8000`)
 2. Try logging in with test accounts:
    - Admin: admin@connecthub.com / admin123
    - Organizer: john@example.com / password

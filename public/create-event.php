@@ -11,7 +11,7 @@ require_once __DIR__ . '/../src/helpers/functions.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: /connecthub/public/login.php');
+    header('Location: /login.php');
     exit;
 }
 
@@ -23,21 +23,21 @@ $success = false;
 // Get group ID from URL
 $groupId = $_GET['group_id'] ?? null;
 if (!$groupId) {
-    header('Location: /connecthub/public/groups.php');
+    header('Location: /groups.php');
     exit;
 }
 
 // Get group details
 $groupData = $group->getById($groupId);
 if (!$groupData) {
-    header('Location: /connecthub/public/groups.php');
+    header('Location: /groups.php');
     exit;
 }
 
 // Check if user can create events in this group
 if (!$group->canUserCreateEvents($_SESSION['user_id'], $groupId)) {
     $_SESSION['error'] = "You don't have permission to create events in this group.";
-    header('Location: /connecthub/public/group-detail.php?slug=' . $groupData['slug']);
+    header('Location: /group-detail.php?slug=' . $groupData['slug']);
     exit;
 }
 
@@ -173,7 +173,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
         <div class="col-md-8 mx-auto">
             <!-- Header -->
             <div class="d-flex align-items-center mb-4">
-                <a href="/connecthub/public/group-detail.php?slug=<?= htmlspecialchars($groupData['slug']) ?>" class="btn btn-outline-secondary me-3">
+                <a href="/group-detail.php?slug=<?= htmlspecialchars($groupData['slug']) ?>" class="btn btn-outline-secondary me-3">
                     <i class="fas fa-arrow-left"></i> Back to Group
                 </a>
                 <div>
