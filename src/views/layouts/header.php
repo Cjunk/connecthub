@@ -24,9 +24,8 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="<?php echo BASE_URL; ?>">
-                <img src="<?php echo BASE_URL; ?>/connecthub_image1.png" alt="ConnectHub Logo" class="navbar-logo me-2">
-                <span><?php echo APP_NAME; ?></span>
+            <a class="navbar-brand" href="<?php echo BASE_URL; ?>">
+                <i class="fas fa-users me-2"></i><?php echo APP_NAME; ?>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">

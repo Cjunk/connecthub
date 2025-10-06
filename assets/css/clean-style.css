@@ -30,38 +30,6 @@ body {
     font-weight: 600;
     font-size: 1.5rem;
     text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-    display: flex !important;
-    align-items: center;
-    height: 48px !important;
-    overflow: hidden;
-}
-
-/* Logo styling */
-.navbar-logo {
-    height: 16px !important;
-    width: 16px !important;
-    max-height: 16px !important;
-    max-width: 16px !important;
-    object-fit: contain;
-    border-radius: 2px;
-    transition: transform 0.2s ease;
-}
-
-.navbar-logo:hover {
-    transform: scale(1.05);
-}
-
-/* Responsive logo sizing */
-@media (max-width: 768px) {
-    .navbar-logo {
-        height: 14px !important;
-        width: 14px !important;
-        max-height: 14px !important;
-        max-width: 14px !important;
-    }
-    .navbar-brand span {
-        font-size: 1.2rem;
-    }
 }
 
 .navbar-nav .nav-link {
