@@ -36,10 +36,10 @@ body {
 
 /* Logo styling */
 .navbar-logo {
-    height: 40px;
+    height: 24px;
     width: auto;
     object-fit: contain;
-    border-radius: 4px;
+    border-radius: 2px;
     transition: transform 0.2s ease;
 }
 
@@ -50,7 +50,7 @@ body {
 /* Responsive logo sizing */
 @media (max-width: 768px) {
     .navbar-logo {
-        height: 32px;
+        height: 20px;
     }
     .navbar-brand span {
         font-size: 1.2rem;
