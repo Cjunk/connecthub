@@ -43,8 +43,14 @@ class Group {
         $result = $this->db->fetch($sql, $params);
         
         if ($result) {
-            // Automatically join the creator as admin
-            $this->joinGroup($result['id'], $data['created_by'], 'creator');
+            // Automatically join the creator as owner (not just creator)
+            $this->joinGroup($result['id'], $data['created_by'], 'owner');
+            
+            // Log group creation
+            $this->logActivity($result['id'], $data['created_by'], 'group_created', [
+                'group_name' => $data['name']
+            ]);
+            
             return $result['id'];
         }
         
@@ -231,8 +237,8 @@ class Group {
                 WHERE gm.group_id = :group_id AND gm.status = 'active'
                 ORDER BY 
                     CASE gm.role 
-                        WHEN 'creator' THEN 1
-                        WHEN 'admin' THEN 2
+                        WHEN 'owner' THEN 1
+                        WHEN 'co_host' THEN 2
                         WHEN 'moderator' THEN 3
                         ELSE 4
                     END,
@@ -292,5 +298,194 @@ class Group {
         $sql = "SELECT id FROM groups WHERE slug = :slug";
         $result = $this->db->fetch($sql, [':slug' => $slug]);
         return !empty($result);
+    }
+    
+    /**
+     * Promote user to a new role within the group
+     */
+    public function promoteUser($groupId, $targetUserId, $newRole, $promoterId) {
+        // Validate that promoter has permission to promote to this role
+        $promoterRole = $this->getUserRole($groupId, $promoterId);
+        
+        if (!$this->canPromoteToRole($promoterRole, $newRole)) {
+            return false;
+        }
+        
+        $sql = "UPDATE group_memberships 
+                SET role = :role, promoted_by = :promoted_by, promoted_at = CURRENT_TIMESTAMP
+                WHERE user_id = :user_id AND group_id = :group_id AND status = 'active'";
+        
+        $result = $this->db->query($sql, [
+            ':role' => $newRole,
+            ':promoted_by' => $promoterId,
+            ':user_id' => $targetUserId,
+            ':group_id' => $groupId
+        ]);
+        
+        if ($result) {
+            $this->logActivity($groupId, $promoterId, 'member_promoted', [
+                'target_user_id' => $targetUserId,
+                'new_role' => $newRole
+            ]);
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Check if user can promote to a specific role
+     */
+    private function canPromoteToRole($promoterRole, $targetRole) {
+        $roleHierarchy = [
+            'member' => 1,
+            'moderator' => 2,
+            'co_host' => 3,
+            'owner' => 4
+        ];
+        
+        $promoterLevel = $roleHierarchy[$promoterRole] ?? 0;
+        $targetLevel = $roleHierarchy[$targetRole] ?? 0;
+        
+        // Owners can promote to any role except owner
+        if ($promoterRole === 'owner' && $targetRole !== 'owner') {
+            return true;
+        }
+        
+        // Co-hosts can promote to moderator only
+        if ($promoterRole === 'co_host' && $targetRole === 'moderator') {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Transfer group ownership to another member
+     */
+    public function transferOwnership($groupId, $currentOwnerId, $newOwnerId) {
+        // Verify current user is actually the owner
+        $currentRole = $this->getUserRole($groupId, $currentOwnerId);
+        if ($currentRole !== 'owner') {
+            return false;
+        }
+        
+        // Verify target user is a member
+        if (!$this->isMember($groupId, $newOwnerId)) {
+            return false;
+        }
+        
+        try {
+            $this->db->beginTransaction();
+            
+            // Demote current owner to co_host
+            $this->db->query(
+                "UPDATE group_memberships SET role = 'co_host' WHERE user_id = :current_owner AND group_id = :group_id",
+                [':current_owner' => $currentOwnerId, ':group_id' => $groupId]
+            );
+            
+            // Promote new owner
+            $this->db->query(
+                "UPDATE group_memberships SET role = 'owner', promoted_by = :promoted_by, promoted_at = CURRENT_TIMESTAMP WHERE user_id = :new_owner AND group_id = :group_id",
+                [':new_owner' => $newOwnerId, ':promoted_by' => $currentOwnerId, ':group_id' => $groupId]
+            );
+            
+            // Update group created_by field
+            $this->db->query(
+                "UPDATE groups SET created_by = :new_owner WHERE id = :group_id",
+                [':new_owner' => $newOwnerId, ':group_id' => $groupId]
+            );
+            
+            $this->db->commit();
+            
+            // Log the ownership transfer
+            $this->logActivity($groupId, $currentOwnerId, 'ownership_transferred', [
+                'new_owner_id' => $newOwnerId
+            ]);
+            
+            return true;
+            
+        } catch (Exception $e) {
+            $this->db->rollback();
+            return false;
+        }
+    }
+    
+    /**
+     * Get group management permissions for a user
+     */
+    public function getUserPermissions($groupId, $userId) {
+        $role = $this->getUserRole($groupId, $userId);
+        
+        if (!$role) {
+            return [];
+        }
+        
+        $sql = "SELECT permission FROM group_role_permissions WHERE role = :role";
+        $permissions = $this->db->fetchAll($sql, [':role' => $role]);
+        
+        return array_column($permissions, 'permission');
+    }
+    
+    /**
+     * Check if user has specific permission in group
+     */
+    public function hasPermission($groupId, $userId, $permission) {
+        $permissions = $this->getUserPermissions($groupId, $userId);
+        return in_array($permission, $permissions);
+    }
+    
+    /**
+     * Get group activity log
+     */
+    public function getActivityLog($groupId, $limit = 20) {
+        $sql = "SELECT gal.*, u.name as user_name
+                FROM group_activity_log gal
+                JOIN users u ON gal.user_id = u.id
+                WHERE gal.group_id = :group_id
+                ORDER BY gal.created_at DESC
+                LIMIT :limit";
+        
+        return $this->db->fetchAll($sql, [
+            ':group_id' => $groupId,
+            ':limit' => $limit
+        ]);
+    }
+    
+    /**
+     * Log group activity
+     */
+    public function logActivity($groupId, $userId, $action, $details = null) {
+        $sql = "INSERT INTO group_activity_log (group_id, user_id, action, details) 
+                VALUES (:group_id, :user_id, :action, :details)";
+        
+        return $this->db->query($sql, [
+            ':group_id' => $groupId,
+            ':user_id' => $userId,
+            ':action' => $action,
+            ':details' => $details ? json_encode($details) : null
+        ]);
+    }
+    
+    /**
+     * Get group co-hosts and moderators for management display
+     */
+    public function getGroupManagers($groupId) {
+        $sql = "SELECT u.id, u.name, u.email, gm.role, gm.joined_at, gm.promoted_at,
+                       promoter.name as promoted_by_name
+                FROM group_memberships gm
+                JOIN users u ON gm.user_id = u.id
+                LEFT JOIN users promoter ON gm.promoted_by = promoter.id
+                WHERE gm.group_id = :group_id 
+                AND gm.status = 'active' 
+                AND gm.role IN ('owner', 'co_host', 'moderator')
+                ORDER BY 
+                    CASE gm.role 
+                        WHEN 'owner' THEN 1
+                        WHEN 'co_host' THEN 2
+                        WHEN 'moderator' THEN 3
+                    END,
+                    gm.promoted_at ASC";
+        
+        return $this->db->fetchAll($sql, [':group_id' => $groupId]);
     }
 }

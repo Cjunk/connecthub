@@ -177,10 +177,17 @@ $pageTitle = $group['name'];
                                         <div>
                                             <h6 class="mb-0"><?php echo htmlspecialchars($member['name']); ?></h6>
                                             <small class="text-muted">
-                                                <?php echo ucfirst($member['role']); ?>
-                                                <?php if ($member['role'] === 'creator'): ?>
-                                                    <i class="fas fa-crown text-warning ms-1" title="Group Creator"></i>
-                                                <?php endif; ?>
+                                                <?php 
+                                                $roleDisplay = ucfirst($member['role']);
+                                                if ($member['role'] === 'owner') {
+                                                    $roleDisplay .= ' <i class="fas fa-crown text-warning ms-1" title="Group Owner"></i>';
+                                                } elseif ($member['role'] === 'co_host') {
+                                                    $roleDisplay .= ' <i class="fas fa-star text-info ms-1" title="Co-Host"></i>';
+                                                } elseif ($member['role'] === 'moderator') {
+                                                    $roleDisplay .= ' <i class="fas fa-shield text-success ms-1" title="Moderator"></i>';
+                                                }
+                                                echo $roleDisplay;
+                                                ?>
                                             </small>
                                         </div>
                                     </div>
@@ -213,13 +220,17 @@ $pageTitle = $group['name'];
                             <p class="mb-0">You have access to all group activities.</p>
                         </div>
                         
-                        <?php if ($userRole !== 'creator'): ?>
+                        <?php if ($userRole !== 'owner'): ?>
                             <form method="POST" onsubmit="return confirm('Are you sure you want to leave this group?');">
                                 <input type="hidden" name="action" value="leave">
                                 <button type="submit" class="btn btn-outline-danger w-100">
                                     <i class="fas fa-sign-out-alt me-2"></i>Leave Group
                                 </button>
                             </form>
+                        <?php else: ?>
+                            <div class="alert alert-info mb-3">
+                                <small><i class="fas fa-info-circle me-1"></i>As the group owner, you cannot leave. Transfer ownership first.</small>
+                            </div>
                         <?php endif; ?>
                     <?php else: ?>
                         <form method="POST">
@@ -303,14 +314,20 @@ $pageTitle = $group['name'];
                             </a>
                         <?php endif; ?>
                         
-                        <?php if ($userRole === 'creator' || $userRole === 'admin'): ?>
+                        <?php if ($userRole === 'owner' || $userRole === 'co_host'): ?>
                             <hr>
-                            <a href="<?php echo BASE_URL; ?>/under-construction.php" class="btn btn-warning">
+                            <a href="<?php echo BASE_URL; ?>/manage-group.php?slug=<?php echo htmlspecialchars($slug); ?>" class="btn btn-warning">
                                 <i class="fas fa-cog me-2"></i>Manage Group
                             </a>
                             <a href="<?php echo BASE_URL; ?>/under-construction.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>Create Event
                             </a>
+                            
+                            <?php if ($userRole === 'owner'): ?>
+                                <a href="<?php echo BASE_URL; ?>/manage-group.php?slug=<?php echo htmlspecialchars($slug); ?>" class="btn btn-info">
+                                    <i class="fas fa-users-cog me-2"></i>Manage Roles
+                                </a>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>

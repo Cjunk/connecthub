@@ -276,8 +276,18 @@ $upcomingEvents = []; // Will be implemented when events table is created
                                 </small>
                             </div>
                             <div class="ms-3">
-                                <span class="badge bg-<?php echo $group['role'] === 'creator' ? 'success' : 'primary'; ?>">
-                                    <?php echo ucfirst($group['role']); ?>
+                                <span class="badge bg-<?php echo $group['role'] === 'owner' ? 'warning' : ($group['role'] === 'co_host' ? 'info' : ($group['role'] === 'moderator' ? 'success' : 'primary')); ?>">
+                                    <?php 
+                                    $roleDisplay = ucfirst($group['role']);
+                                    if ($group['role'] === 'owner') {
+                                        $roleDisplay = '<i class="fas fa-crown me-1"></i>' . $roleDisplay;
+                                    } elseif ($group['role'] === 'co_host') {
+                                        $roleDisplay = '<i class="fas fa-star me-1"></i>Co-Host';
+                                    } elseif ($group['role'] === 'moderator') {
+                                        $roleDisplay = '<i class="fas fa-shield me-1"></i>' . $roleDisplay;
+                                    }
+                                    echo $roleDisplay;
+                                    ?>
                                 </span>
                             </div>
                         </div>
