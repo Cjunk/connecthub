@@ -2,6 +2,9 @@
 require_once '../config/constants.php';
 require_once '../config/bootstrap.php';
 
+// Ensure User model is loaded for membership checking
+require_once '../src/models/User.php';
+
 // Check if user is logged in
 if (!isLoggedIn()) {
     redirect(BASE_URL . '/login.php');

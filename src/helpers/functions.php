@@ -214,6 +214,33 @@ function sendEmail($to, $subject, $body, $isHTML = true) {
 }
 
 /**
+ * Check if user has valid membership
+ */
+function hasValidMembership($user = null) {
+    if (!$user) {
+        $user = getCurrentUser();
+    }
+    
+    if (!$user) {
+        return false;
+    }
+    
+    // Admins and super admins bypass membership requirements
+    if (in_array($user['role'], ['admin', 'super_admin'])) {
+        return true;
+    }
+    
+    // Check if user has membership_expires date and it's still valid
+    if (!empty($user['membership_expires'])) {
+        $expiryDate = new DateTime($user['membership_expires']);
+        $currentDate = new DateTime();
+        return $expiryDate >= $currentDate;
+    }
+    
+    return false;
+}
+
+/**
  * Flash message functions
  */
 function setFlashMessage($type, $message) {
