@@ -10,8 +10,12 @@ if (!isLoggedIn()) {
 $currentUser = getCurrentUser();
 $pageTitle = 'Dashboard';
 
-// For now, we'll use static data since we only have users table
-$userGroups = []; // Will be implemented when groups table is created
+// Load group data
+require_once '../src/models/Group.php';
+$groupModel = new Group();
+
+// Get user's groups
+$userGroups = $groupModel->getUserGroups($currentUser['id']);
 $upcomingEvents = []; // Will be implemented when events table is created
 
 ?>
@@ -51,7 +55,7 @@ $upcomingEvents = []; // Will be implemented when events table is created
             <div class="card text-center h-100">
                 <div class="card-body">
                     <i class="fas fa-users fa-2x text-primary mb-2"></i>
-                    <h4 class="card-title">0</h4>
+                    <h4 class="card-title"><?php echo count($userGroups); ?></h4>
                     <p class="card-text text-muted">Groups Joined</p>
                 </div>
             </div>
@@ -232,14 +236,58 @@ $upcomingEvents = []; // Will be implemented when events table is created
                     </a>
                 </div>
                 <div class="card-body">
-                    <div class="text-center py-4">
-                        <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
-                        <h6 class="text-muted">No groups joined yet</h6>
-                        <p class="text-muted">Join groups to connect with like-minded people!</p>
-                        <a href="<?php echo BASE_URL; ?>/groups.php" class="btn btn-primary">
-                            <i class="fas fa-search me-2"></i>Browse Groups
-                        </a>
-                    </div>
+                    <?php if (empty($userGroups)): ?>
+                        <div class="text-center py-4">
+                            <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No groups joined yet</h6>
+                            <p class="text-muted">Join groups to connect with like-minded people!</p>
+                            <a href="<?php echo BASE_URL; ?>/groups.php" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Browse Groups
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach (array_slice($userGroups, 0, 3) as $group): ?>
+                        <div class="d-flex align-items-center border-bottom py-3">
+                            <div class="group-avatar me-3">
+                                <?php if ($group['cover_image']): ?>
+                                    <img src="<?php echo htmlspecialchars($group['cover_image']); ?>" 
+                                         alt="<?php echo htmlspecialchars($group['name']); ?>" 
+                                         class="rounded-circle" width="50" height="50" style="object-fit: cover;">
+                                <?php else: ?>
+                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center" 
+                                         style="width: 50px; height: 50px;">
+                                        <i class="fas fa-users text-white"></i>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">
+                                    <a href="<?php echo BASE_URL; ?>/group-detail.php?slug=<?php echo $group['slug']; ?>" 
+                                       class="text-decoration-none">
+                                        <?php echo htmlspecialchars($group['name']); ?>
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    <i class="fas fa-users me-1"></i>
+                                    <?php echo number_format($group['member_count']); ?> members
+                                </small>
+                            </div>
+                            <div class="ms-3">
+                                <span class="badge bg-<?php echo $group['role'] === 'creator' ? 'success' : 'primary'; ?>">
+                                    <?php echo ucfirst($group['role']); ?>
+                                </span>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                        
+                        <?php if (count($userGroups) > 3): ?>
+                        <div class="text-center pt-3">
+                            <a href="<?php echo BASE_URL; ?>/groups.php" class="btn btn-sm btn-outline-primary">
+                                View All <?php echo count($userGroups); ?> Groups
+                            </a>
+                        </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
