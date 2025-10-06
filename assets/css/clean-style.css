@@ -36,8 +36,9 @@ body {
 
 /* Logo styling - using width percentage as requested */
 .navbar-logo {
-    width: 10%;
-    height: auto;
+    width: 10% !important;
+    height: auto !important;
+    max-width: 10% !important;
     object-fit: contain;
     border-radius: 2px;
     transition: transform 0.2s ease;
@@ -50,7 +51,8 @@ body {
 /* Responsive logo sizing */
 @media (max-width: 768px) {
     .navbar-logo {
-        width: 8%;
+        width: 8% !important;
+        max-width: 8% !important;
     }
     .navbar-brand span {
         font-size: 1.2rem;
