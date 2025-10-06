@@ -34,28 +34,15 @@ body {
     align-items: center;
 }
 
-/* Logo styling - using width percentage as requested */
+/* Simple logo class - just width 10% */
 .navbar-logo {
     width: 10% !important;
-    height: auto !important;
-    max-width: 10% !important;
-    object-fit: contain;
-    border-radius: 2px;
-    transition: transform 0.2s ease;
 }
 
-.navbar-logo:hover {
-    transform: scale(1.05);
-}
-
-/* Responsive logo sizing */
+/* Mobile smaller */
 @media (max-width: 768px) {
     .navbar-logo {
         width: 8% !important;
-        max-width: 8% !important;
-    }
-    .navbar-brand span {
-        font-size: 1.2rem;
     }
 }
 
