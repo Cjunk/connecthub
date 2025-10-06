@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"name": "ConnectHub",
+			"path": "."
+		}
+	],
+	"settings": {
+		"php.suggest.basic": false,
+		"php.validate.enable": true,
+		"files.associations": {
+			"*.php": "php"
+		},
+		"emmet.includeLanguages": {
+			"php": "html"
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"bmewburn.vscode-intelephense-client",
+			"ms-vscode.vscode-json",
+			"formulahendry.auto-rename-tag",
+			"bradlc.vscode-tailwindcss"
+		]
+	}
+}

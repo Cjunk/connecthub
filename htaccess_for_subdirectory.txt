@@ -1,0 +1,13 @@
+# URL Rewrite for ConnectHub
+# Place this in public_html/connecthub/.htaccess
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/$1 [L]
+
+# Redirect index to public
+DirectoryIndex public/index.php
+
+# Security: Deny access to sensitive directories
+RewriteRule ^(config|src|database|docs)/ - [F,L]

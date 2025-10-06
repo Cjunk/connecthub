@@ -1,0 +1,385 @@
+/* CLEAN CSS - NO MOBILE CRAP */
+
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    line-height: 1.6;
+    padding-top: 76px;
+}
+
+/* Navigation */
+.navbar {
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    transition: all 0.3s ease;
+    z-index: 1030;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 0.6rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, var(--primary-color), #0056b3);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #0056b3, var(--primary-color));
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+}
+
+.btn-outline-primary:hover {
+    transform: translateY(-2px);
+}
+
+/* Forms */
+.form-control {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+/* Alerts */
+.alert {
+    border: none;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: linear-gradient(45deg, #d4edda, #c3e6cb);
+    color: #155724;
+}
+
+.alert-danger {
+    background: linear-gradient(45deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+}
+
+.alert-info {
+    background: linear-gradient(45deg, #d1ecf1, #bee5eb);
+    color: #0c5460;
+}
+
+.alert-warning {
+    background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+    color: #856404;
+}
+
+/* Hero Section */
+.hero-section {
+    position: relative;
+    overflow: hidden;
+    margin-top: -76px;
+    padding-top: 76px;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 50%, #17a2b8 100%) !important;
+    color: white !important;
+}
+
+.hero-section .btn-light {
+    background: rgba(255, 255, 255, 0.95);
+    color: #28a745;
+    border: none;
+    font-weight: 600;
+}
+
+.hero-section .btn-light:hover {
+    background: white;
+    color: #20c997;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.hero-section .btn-outline-light {
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    color: white;
+    font-weight: 600;
+}
+
+.hero-section .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: white;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Feature Cards */
+.feature-icon {
+    background: linear-gradient(45deg, var(--primary-color), #0056b3);
+}
+
+/* Stats */
+.stats-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Event Cards */
+.event-card {
+    border-left: 4px solid var(--primary-color);
+}
+
+.event-card:hover {
+    border-left-color: var(--success-color);
+}
+
+.event-date {
+    background: linear-gradient(45deg, var(--primary-color), #0056b3);
+    color: white;
+    border-radius: 8px;
+    padding: 0.5rem;
+    font-weight: 600;
+    text-align: center;
+    min-width: 80px;
+}
+
+/* Group Cards */
+.group-card {
+    border-top: 4px solid var(--success-color);
+}
+
+.group-card:hover {
+    border-top-color: var(--primary-color);
+}
+
+/* Badges */
+.badge {
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+}
+
+/* Utilities */
+.text-gradient {
+    background: linear-gradient(45deg, var(--primary-color), var(--success-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.shadow-custom {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading Animation */
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Pagination */
+.pagination .page-link {
+    border: none;
+    color: var(--primary-color);
+    font-weight: 500;
+    margin: 0 2px;
+    border-radius: 6px;
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--primary-color);
+    color: white;
+}
+
+.pagination .page-link:hover {
+    background: var(--light-color);
+    color: var(--primary-color);
+}
+
+/* Footer */
+footer {
+    background: linear-gradient(135deg, var(--dark-color), #495057);
+}
+
+footer a {
+    transition: color 0.3s ease;
+}
+
+footer a:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Flash Messages */
+.flash-messages-container {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1040;
+    width: 90%;
+    max-width: 600px;
+    pointer-events: none;
+}
+
+.flash-message {
+    pointer-events: auto;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: none;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.flash-message.show {
+    animation: slideDown 0.3s ease-out, fadeOut 0.5s ease-out 4.5s forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+/* ===== MOBILE RESPONSIVENESS - SAFE ADDITIONS ONLY ===== */
+
+/* Mobile viewport fix */
+@media (max-width: 767px) {
+    /* Ensure proper spacing on mobile */
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    /* Make buttons more touch-friendly */
+    .btn {
+        min-height: 44px;
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+    
+    /* Make form inputs touch-friendly */
+    .form-control, .form-select {
+        min-height: 44px;
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+    
+    /* Improve navbar on mobile */
+    .navbar-toggler {
+        border: none;
+        padding: 0.5rem;
+    }
+    
+    .navbar-toggler:focus {
+        box-shadow: none;
+        outline: 2px solid rgba(255, 255, 255, 0.5);
+    }
+    
+    /* Better card spacing on mobile */
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    /* Improve hero section on mobile */
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-section p {
+        font-size: 1rem;
+    }
+    
+    /* Better table on mobile */
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    /* Flash messages on mobile */
+    .flash-messages-container {
+        width: 95%;
+        top: 70px;
+    }
+    
+    /* Modal improvements on mobile */
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .modal-content {
+        border-radius: 12px;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 991px) {
+    .btn {
+        font-size: 0.95rem;
+    }
+}

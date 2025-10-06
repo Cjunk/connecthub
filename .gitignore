@@ -1,0 +1,100 @@
+# Security & Environment Files
+config/local_config.php
+config/.env
+.env
+.env.local
+.env.production
+
+# Database dumps with sensitive data
+database/backups/
+*.sql.backup
+
+# Upload directories (keep structure, ignore contents)
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/README.md
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+
+# IDE and Editor files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# PHP specific
+vendor/
+composer.phar
+.composer/
+
+# Node.js (for future frontend tools)
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Build and distribution
+dist/
+build/
+*.map
+
+# Cache and session files
+cache/
+sessions/
+*.cache
+
+# Error and access logs
+error.log
+access.log
+php_errors.log
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Local development files
+local/
+dev/
+development/
+
+# Configuration override files
+config/*local*
+config/*dev*
+config/*prod*
+
+# Payment and API keys
+**/keys/
+**/*key*
+**/*secret*
+**/*token*
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
