@@ -20,8 +20,31 @@ $userGroups     = $groupModel->getUserGroups($currentUser['id']);
 $hasMembership  = $userModel->hasMembership($currentUser['id']);
 $upcomingEvents = $eventModel->getUpcomingForUser($currentUser['id'], 5);
 
-$isNewUser      = strtotime($currentUser['created_at']) > strtotime('-1 day');
-$needsOnboarding = empty($userGroups) && !$hasMembership;
+// Fallback to public/published upcoming events so non-members still see events
+$visibleEvents = $upcomingEvents;
+if (empty($visibleEvents)) {
+    if (method_exists($eventModel, 'getUpcomingPublic')) {
+        $visibleEvents = $eventModel->getUpcomingPublic(5);
+    } elseif (method_exists($eventModel, 'getUpcoming')) {
+        // Assumes this returns only published/public events
+        $visibleEvents = $eventModel->getUpcoming(5);
+    } else {
+        $visibleEvents = [];
+    }
+}
+
+$isNewUser        = strtotime($currentUser['created_at']) > strtotime('-1 day');
+$needsOnboarding  = empty($userGroups) && !$hasMembership;
+
+// === HERO PHOTOS (placeholders for now; swap with your own later) ===
+$heroPhotos = [
+    'https://picsum.photos/seed/blue-mountains/1200/800',
+    'https://picsum.photos/seed/katoomba/1200/800',
+    'https://picsum.photos/seed/three-sisters/1200/800',
+    'https://picsum.photos/seed/wentworth-falls/1200/800',
+    'https://picsum.photos/seed/grose-valley/1200/800',
+    'https://picsum.photos/seed/megalong/1200/800',
+];
 
 // === HELPERS ===
 function roleBadge(string $role): string {
@@ -50,6 +73,30 @@ include '../src/views/layouts/header.php';
 ?>
 
 <div class="container">
+
+    <!-- HERO: Photo Pile -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+          <h3 class="mb-2 fw-semibold">Explore the Blue Mountains</h3>
+          <a href="<?= BASE_URL ?>/events.php" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-calendar-alt me-1"></i> Find an adventure
+          </a>
+        </div>
+
+        <div class="photo-pile">
+          <?php foreach ($heroPhotos as $i => $src): ?>
+            <a href="<?= htmlspecialchars($src) ?>" target="_blank" rel="noopener"
+               class="polaroid p<?= $i+1 ?>" aria-label="Open photo <?= $i+1 ?>">
+              <img src="<?= htmlspecialchars($src) ?>"
+                   alt="Scenic photo <?= $i+1 ?>"
+                   loading="lazy" decoding="async">
+              <span class="caption">Outdoors • NSW</span>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </div>
 
     <?php if ($needsOnboarding): ?>
     <!-- === ONBOARDING === -->
@@ -166,14 +213,10 @@ include '../src/views/layouts/header.php';
                     <a href="<?= BASE_URL; ?>/events.php" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
-                    <?php if (empty($upcomingEvents)): ?>
-                        <?php if (!$hasMembership): ?>
-                            <?php emptyBlock('calendar-heart','🎪 Amazing Events Await!','Join groups and get membership to discover events!',BASE_URL.'/membership.php','Get Membership & Start Exploring!','warning'); ?>
-                        <?php else: ?>
-                            <?php emptyBlock('calendar-times','No upcoming events','Check out our events page for more.',BASE_URL.'/events.php','Browse Events'); ?>
-                        <?php endif; ?>
+                    <?php if (empty($visibleEvents)): ?>
+                        <?php emptyBlock('calendar-times','No upcoming events','Check out our events page for more.',BASE_URL.'/events.php','Browse Events'); ?>
                     <?php else: ?>
-                        <?php foreach ($upcomingEvents as $event): ?>
+                        <?php foreach ($visibleEvents as $event): ?>
                             <div class="d-flex align-items-center border-bottom py-3">
                                 <div class="text-center me-3">
                                     <div><?= formatDate($event['event_date'],'M'); ?></div>
@@ -188,9 +231,14 @@ include '../src/views/layouts/header.php';
                                             <?= htmlspecialchars($event['title']); ?>
                                         </a>
                                     </h6>
-                                    <small class="text-muted"><i class="fas fa-users me-1"></i><?= htmlspecialchars($event['group_name']); ?> • <?= date('g:i A', strtotime($event['start_time'])); ?></small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-users me-1"></i><?= htmlspecialchars($event['group_name'] ?? 'ConnectHub') ?>
+                                        • <?= date('g:i A', strtotime($event['start_time'])); ?>
+                                    </small>
                                 </div>
-                                <span class="badge bg-primary rounded-pill ms-3"><?= $event['attendee_count']; ?> attending</span>
+                                <?php if (isset($event['attendee_count'])): ?>
+                                    <span class="badge bg-primary rounded-pill ms-3"><?= (int)$event['attendee_count']; ?> attending</span>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -253,5 +301,61 @@ include '../src/views/layouts/header.php';
         </div>
     </div>
 </div>
+
+<style>
+/* --- Photo pile styling --- */
+.photo-pile{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap:18px;
+  justify-items:center;
+}
+.polaroid{
+  position:relative;
+  display:block;
+  width:180px;
+  aspect-ratio: 4/3;
+  background:#fff;
+  padding:8px 8px 26px;
+  border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+  transform-origin:center center;
+  transition:transform .18s ease, box-shadow .18s ease;
+  text-decoration:none;
+}
+.polaroid img{
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  border-radius:4px;
+  display:block;
+}
+.polaroid .caption{
+  position:absolute; left:10px; right:10px; bottom:6px;
+  font-size:.8rem; color:#555;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+/* “Pile” look via slight rotations/offsets */
+.polaroid.p1{ transform:rotate(-5deg) translateY(4px); }
+.polaroid.p2{ transform:rotate(3deg) translateY(-6px); }
+.polaroid.p3{ transform:rotate(-2deg) translateY(2px); }
+.polaroid.p4{ transform:rotate(6deg) translateY(-4px); }
+.polaroid.p5{ transform:rotate(-4deg) translateY(3px); }
+.polaroid.p6{ transform:rotate(2deg) translateY(-5px); }
+/* Hover brings card to focus */
+@media (hover:hover){
+  .polaroid:hover{
+    transform:rotate(0) scale(1.03);
+    z-index:2;
+    box-shadow:0 12px 30px rgba(0,0,0,.18);
+  }
+}
+/* Responsive sizing */
+@media (max-width: 576px){
+  .polaroid{ width: 44vw; }
+}
+@media (min-width: 1200px){
+  .polaroid{ width: 200px; }
+}
+</style>
 
 <?php include '../src/views/layouts/footer.php'; ?>

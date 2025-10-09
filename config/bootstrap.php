@@ -3,16 +3,28 @@
  * Application Bootstrap
  */
 
+// Load configuration constants first
+require_once __DIR__ . '/constants.php';
+
 // Start session with security configurations
 if (session_status() === PHP_SESSION_NONE) {
     // Session timeout settings (2 hours = 7200 seconds)
     ini_set('session.gc_maxlifetime', 7200);
     ini_set('session.cookie_lifetime', 7200);
     
-    // Enhanced security settings
+    // Enhanced security settings - lock sessions down completely
+    ini_set('session.use_strict_mode', 1);
     ini_set('session.cookie_httponly', 1);
     ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) ? 1 : 0);
-    ini_set('session.use_strict_mode', 1);
+    
+    // PHP 7.3+ SameSite protection
+    if (PHP_VERSION_ID >= 70300) {
+        session_set_cookie_params([
+            'httponly' => true,
+            'secure' => !empty($_SERVER['HTTPS']),
+            'samesite' => 'Lax'
+        ]);
+    }
     
     session_start();
     

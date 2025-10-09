@@ -1,15 +1,11 @@
 <?php
 require_once '../config/constants.php';
 require_once '../config/bootstrap.php';
-
-// Ensure User model is loaded for membership checking
 require_once '../src/models/User.php';
+require_once '../src/models/Group.php';
+require_once '../src/models/Event.php';
 
-// Check if user is logged in
-if (!isLoggedIn()) {
-    redirect(BASE_URL . '/login.php');
-}
-
+if (!isLoggedIn()) redirect(BASE_URL . '/login.php');
 $currentUser = getCurrentUser();
 $hasValidMembership = hasValidMembership($currentUser);
 
@@ -18,313 +14,200 @@ if (!$hasValidMembership) {
     redirect(BASE_URL . '/membership.php');
 }
 
-// Get group slug from URL parameter
 $slug = $_GET['slug'] ?? '';
-if (empty($slug)) {
-    redirect(BASE_URL . '/groups.php');
-}
+if (empty($slug)) redirect(BASE_URL . '/groups.php');
 
-require_once '../src/models/Group.php';
 $groupModel = new Group();
-
-// Get group details
 $group = $groupModel->getBySlug($slug);
 if (!$group) {
     setFlashMessage('error', 'Group not found.');
     redirect(BASE_URL . '/groups.php');
 }
 
-// Check user permissions - only owner and co-hosts can manage
 $userRole = $groupModel->getUserRole($group['id'], $currentUser['id']);
 if (!in_array($userRole, ['owner', 'co_host'])) {
     setFlashMessage('error', 'You do not have permission to manage this group.');
     redirect(BASE_URL . '/group-detail.php?slug=' . urlencode($slug));
 }
 
-// Handle role management actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action'])) {
-        switch ($_POST['action']) {
-            case 'promote':
-                $targetUserId = (int)$_POST['user_id'];
-                $newRole = $_POST['new_role'];
-                
-                if ($groupModel->promoteUser($group['id'], $targetUserId, $newRole, $currentUser['id'])) {
-                    setFlashMessage('success', 'User role updated successfully!');
-                } else {
-                    setFlashMessage('error', 'Failed to update user role. Check your permissions.');
-                }
-                break;
-                
-            case 'remove':
-                $targetUserId = (int)$_POST['user_id'];
-                
-                if ($groupModel->leaveGroup($group['id'], $targetUserId)) {
-                    setFlashMessage('success', 'User removed from group.');
-                } else {
-                    setFlashMessage('error', 'Failed to remove user from group.');
-                }
-                break;
-        }
-        
-        redirect(BASE_URL . '/manage-group.php?slug=' . urlencode($slug));
+// POST actions (promote, remove)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $action = $_POST['action'];
+    $targetUserId = (int)($_POST['user_id'] ?? 0);
+
+    switch ($action) {
+        case 'promote':
+            $newRole = $_POST['new_role'] ?? '';
+            $ok = $groupModel->promoteUser($group['id'], $targetUserId, $newRole, $currentUser['id']);
+            setFlashMessage($ok ? 'success' : 'error', $ok ? 'Role updated.' : 'Failed to update role.');
+            break;
+        case 'remove':
+            $ok = $groupModel->leaveGroup($group['id'], $targetUserId);
+            setFlashMessage($ok ? 'success' : 'error', $ok ? 'Member removed.' : 'Failed to remove.');
+            break;
     }
+    redirect(BASE_URL . '/manage-group.php?slug=' . urlencode($slug));
 }
 
-// Get group members and managers
 $members = $groupModel->getMembers($group['id']);
 $managers = $groupModel->getGroupManagers($group['id']);
-
 $pageTitle = 'Manage ' . $group['name'];
+include '../src/views/layouts/header.php';
 ?>
 
-<?php include '../src/views/layouts/header.php'; ?>
-
-<div class="container">
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h1 class="h2 mb-2">
-                <i class="fas fa-users-cog text-primary me-2"></i>Manage Group
-            </h1>
-            <p class="text-muted mb-0">
-                <a href="<?php echo BASE_URL; ?>/group-detail.php?slug=<?php echo htmlspecialchars($slug); ?>" class="text-decoration-none">
-                    <?php echo htmlspecialchars($group['name']); ?>
-                </a>
-            </p>
+<div class="container mt-4 group-manage">
+  <!-- Group Header -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="banner-wrapper position-relative" style="height:280px; overflow:hidden;">
+      <?php if ($group['cover_image']): ?>
+        <img src="<?= htmlspecialchars($group['cover_image']) ?>" alt="Group Banner"
+             style="width:100%; height:100%; object-fit:cover; object-position:center;">
+      <?php else: ?>
+        <div class="placeholder-banner d-flex align-items-center justify-content-center h-100 text-muted">
+          <i class="fas fa-image me-2"></i> No group image uploaded yet
         </div>
-        <div class="col-md-4 text-end">
-            <a href="<?php echo BASE_URL; ?>/group-detail.php?slug=<?php echo htmlspecialchars($slug); ?>" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Group
-            </a>
-        </div>
+      <?php endif; ?>
+      <div class="banner-overlay position-absolute top-0 start-0 w-100 h-100"
+           style="background:linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6));"></div>
+      <div class="banner-text position-absolute bottom-0 start-0 text-white p-4">
+        <h2 class="fw-semibold mb-1"><?= htmlspecialchars($group['name']) ?></h2>
+        <p class="mb-0 small"><?= htmlspecialchars($group['location'] ?: 'Online') ?></p>
+      </div>
     </div>
+  </div>
 
-    <div class="row">
-        <!-- Group Leadership -->
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-crown text-warning me-2"></i>Group Leadership
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <?php foreach ($managers as $manager): ?>
-                        <div class="d-flex align-items-center justify-content-between py-2 <?php echo $manager['role'] !== 'owner' ? 'border-bottom' : ''; ?>">
-                            <div class="d-flex align-items-center">
-                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" 
-                                     style="width: 40px; height: 40px;">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-0"><?php echo htmlspecialchars($manager['name']); ?></h6>
-                                    <small class="text-muted">
-                                        <?php if ($manager['role'] === 'owner'): ?>
-                                            <i class="fas fa-crown text-warning me-1"></i>Owner
-                                        <?php elseif ($manager['role'] === 'co_host'): ?>
-                                            <i class="fas fa-star text-info me-1"></i>Co-Host
-                                        <?php elseif ($manager['role'] === 'moderator'): ?>
-                                            <i class="fas fa-shield text-success me-1"></i>Moderator
-                                        <?php endif; ?>
-                                        
-                                        <?php if ($manager['promoted_at']): ?>
-                                            <span class="text-muted">• Promoted <?php echo timeAgo($manager['promoted_at']); ?></span>
-                                        <?php endif; ?>
-                                    </small>
-                                </div>
-                            </div>
-                            
-                            <?php if ($userRole === 'owner' && $manager['role'] !== 'owner'): ?>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                        <i class="fas fa-cog"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <?php if ($manager['role'] === 'co_host'): ?>
-                                            <li>
-                                                <form method="POST" class="d-inline">
-                                                    <input type="hidden" name="action" value="promote">
-                                                    <input type="hidden" name="user_id" value="<?php echo $manager['id']; ?>">
-                                                    <input type="hidden" name="new_role" value="moderator">
-                                                    <button type="submit" class="dropdown-item">
-                                                        <i class="fas fa-arrow-down me-2"></i>Demote to Moderator
-                                                    </button>
-                                                </form>
-                                            </li>
-                                        <?php elseif ($manager['role'] === 'moderator'): ?>
-                                            <li>
-                                                <form method="POST" class="d-inline">
-                                                    <input type="hidden" name="action" value="promote">
-                                                    <input type="hidden" name="user_id" value="<?php echo $manager['id']; ?>">
-                                                    <input type="hidden" name="new_role" value="co_host">
-                                                    <button type="submit" class="dropdown-item">
-                                                        <i class="fas fa-arrow-up me-2"></i>Promote to Co-Host
-                                                    </button>
-                                                </form>
-                                            </li>
-                                        <?php endif; ?>
-                                        
-                                        <li>
-                                            <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to remove this person from leadership?');">
-                                                <input type="hidden" name="action" value="promote">
-                                                <input type="hidden" name="user_id" value="<?php echo $manager['id']; ?>">
-                                                <input type="hidden" name="new_role" value="member">
-                                                <button type="submit" class="dropdown-item text-warning">
-                                                    <i class="fas fa-user me-2"></i>Demote to Member
-                                                </button>
-                                            </form>
-                                        </li>
-                                    </ul>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
+  <!-- Main Content -->
+  <div class="row">
+    <!-- LEFT: Leadership & Members -->
+    <div class="col-lg-8">
+      <!-- Leadership -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-sandstone d-flex align-items-center justify-content-between">
+          <h5 class="text-forest mb-0"><i class="fas fa-crown text-warning me-2"></i>Group Leadership</h5>
+          <small class="text-muted"><?= count($managers) ?> leader<?= count($managers) !== 1 ? 's' : '' ?></small>
         </div>
-
-        <!-- Group Members -->
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-users me-2"></i>Group Members (<?php echo count($members); ?>)
-                    </h5>
+        <div class="card-body">
+          <?php foreach ($managers as $m): ?>
+            <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-forest text-white d-flex align-items-center justify-content-center me-3"
+                     style="width:42px; height:42px;"><i class="fas fa-user"></i></div>
+                <div>
+                  <div class="fw-semibold"><?= htmlspecialchars($m['name']) ?></div>
+                  <small class="text-muted">
+                    <?php if ($m['role']==='owner'): ?><i class="fas fa-crown text-warning me-1"></i>Owner<?php endif; ?>
+                    <?php if ($m['role']==='co_host'): ?><i class="fas fa-star text-info me-1"></i>Co-Host<?php endif; ?>
+                    <?php if ($m['role']==='moderator'): ?><i class="fas fa-shield text-success me-1"></i>Moderator<?php endif; ?>
+                    <?php if ($m['promoted_at']): ?> • Promoted <?= timeAgo($m['promoted_at']) ?><?php endif; ?>
+                  </small>
                 </div>
-                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
-                    <?php 
-                    $regularMembers = array_filter($members, function($member) {
-                        return $member['role'] === 'member';
-                    });
-                    ?>
-                    
-                    <?php if (empty($regularMembers)): ?>
-                        <p class="text-muted">No regular members yet. Only leadership team.</p>
-                    <?php else: ?>
-                        <?php foreach ($regularMembers as $member): ?>
-                            <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-                                <div class="d-flex align-items-center">
-                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" 
-                                         style="width: 35px; height: 35px;">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0"><?php echo htmlspecialchars($member['name']); ?></h6>
-                                        <small class="text-muted">Joined <?php echo timeAgo($member['joined_at']); ?></small>
-                                    </div>
-                                </div>
-                                
-                                <?php if ($userRole === 'owner' || ($userRole === 'co_host' && in_array('promote_moderators', $groupModel->getUserPermissions($group['id'], $currentUser['id'])))): ?>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                            <i class="fas fa-cog"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <?php if ($userRole === 'owner'): ?>
-                                                <li>
-                                                    <form method="POST" class="d-inline">
-                                                        <input type="hidden" name="action" value="promote">
-                                                        <input type="hidden" name="user_id" value="<?php echo $member['id']; ?>">
-                                                        <input type="hidden" name="new_role" value="co_host">
-                                                        <button type="submit" class="dropdown-item">
-                                                            <i class="fas fa-star me-2"></i>Promote to Co-Host
-                                                        </button>
-                                                    </form>
-                                                </li>
-                                            <?php endif; ?>
-                                            
-                                            <li>
-                                                <form method="POST" class="d-inline">
-                                                    <input type="hidden" name="action" value="promote">
-                                                    <input type="hidden" name="user_id" value="<?php echo $member['id']; ?>">
-                                                    <input type="hidden" name="new_role" value="moderator">
-                                                    <button type="submit" class="dropdown-item">
-                                                        <i class="fas fa-shield me-2"></i>Promote to Moderator
-                                                    </button>
-                                                </form>
-                                            </li>
-                                            
-                                            <li><hr class="dropdown-divider"></li>
-                                            
-                                            <li>
-                                                <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to remove this member from the group?');">
-                                                    <input type="hidden" name="action" value="remove">
-                                                    <input type="hidden" name="user_id" value="<?php echo $member['id']; ?>">
-                                                    <button type="submit" class="dropdown-item text-danger">
-                                                        <i class="fas fa-user-times me-2"></i>Remove from Group
-                                                    </button>
-                                                </form>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach; ?>
+              </div>
+              <?php if ($userRole === 'owner' && $m['role'] !== 'owner'): ?>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-cog"></i></button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <?php if ($m['role']==='co_host'): ?>
+                      <li><form method="POST"><input type="hidden" name="action" value="promote"><input type="hidden" name="user_id" value="<?= $m['id'] ?>"><input type="hidden" name="new_role" value="moderator"><button class="dropdown-item"><i class="fas fa-arrow-down me-2"></i>Demote to Moderator</button></form></li>
+                    <?php elseif ($m['role']==='moderator'): ?>
+                      <li><form method="POST"><input type="hidden" name="action" value="promote"><input type="hidden" name="user_id" value="<?= $m['id'] ?>"><input type="hidden" name="new_role" value="co_host"><button class="dropdown-item"><i class="fas fa-arrow-up me-2"></i>Promote to Co-Host</button></form></li>
                     <?php endif; ?>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><form method="POST" onsubmit="return confirm('Remove from leadership?');"><input type="hidden" name="action" value="promote"><input type="hidden" name="user_id" value="<?= $m['id'] ?>"><input type="hidden" name="new_role" value="member"><button class="dropdown-item text-warning"><i class="fas fa-user me-2"></i>Demote to Member</button></form></li>
+                  </ul>
                 </div>
+              <?php endif; ?>
             </div>
+          <?php endforeach; ?>
         </div>
+      </div>
+
+      <!-- Members -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-sandstone">
+          <h5 class="text-forest mb-0"><i class="fas fa-users me-2"></i>Group Members (<?= count($members) ?>)</h5>
+        </div>
+        <div class="card-body" style="max-height:420px; overflow-y:auto;">
+          <?php
+          $regularMembers = array_filter($members, fn($m) => $m['role'] === 'member');
+          ?>
+          <?php if (empty($regularMembers)): ?>
+            <p class="text-muted mb-0">No regular members yet.</p>
+          <?php else: ?>
+            <?php foreach ($regularMembers as $m): ?>
+              <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                <div class="d-flex align-items-center">
+                  <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3"
+                       style="width:36px; height:36px;"><i class="fas fa-user"></i></div>
+                  <div>
+                    <div class="fw-semibold"><?= htmlspecialchars($m['name']) ?></div>
+                    <small class="text-muted">Joined <?= timeAgo($m['joined_at']) ?></small>
+                  </div>
+                </div>
+                <?php if ($userRole === 'owner' || $userRole === 'co_host'): ?>
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-cog"></i></button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <?php if ($userRole==='owner'): ?>
+                        <li><form method="POST"><input type="hidden" name="action" value="promote"><input type="hidden" name="user_id" value="<?= $m['id'] ?>"><input type="hidden" name="new_role" value="co_host"><button class="dropdown-item"><i class="fas fa-star me-2"></i>Promote to Co-Host</button></form></li>
+                      <?php endif; ?>
+                      <li><form method="POST"><input type="hidden" name="action" value="promote"><input type="hidden" name="user_id" value="<?= $m['id'] ?>"><input type="hidden" name="new_role" value="moderator"><button class="dropdown-item"><i class="fas fa-shield me-2"></i>Promote to Moderator</button></form></li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li><form method="POST" onsubmit="return confirm('Remove this member?');"><input type="hidden" name="action" value="remove"><input type="hidden" name="user_id" value="<?= $m['id'] ?>"><button class="dropdown-item text-danger"><i class="fas fa-user-times me-2"></i>Remove from Group</button></form></li>
+                    </ul>
+                  </div>
+                <?php endif; ?>
+              </div>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </div>
+      </div>
     </div>
 
-    <!-- Role Information -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">
-                        <i class="fas fa-info-circle me-2"></i>Role Permissions
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <h6 class="text-warning">
-                                <i class="fas fa-crown me-1"></i>Owner
-                            </h6>
-                            <ul class="list-unstyled small text-muted">
-                                <li>• Full group management</li>
-                                <li>• Promote/demote co-hosts</li>
-                                <li>• Transfer ownership</li>
-                                <li>• Delete group</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-3">
-                            <h6 class="text-info">
-                                <i class="fas fa-star me-1"></i>Co-Host
-                            </h6>
-                            <ul class="list-unstyled small text-muted">
-                                <li>• Manage members</li>
-                                <li>• Create events</li>
-                                <li>• Promote moderators</li>
-                                <li>• Moderate discussions</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-3">
-                            <h6 class="text-success">
-                                <i class="fas fa-shield me-1"></i>Moderator
-                            </h6>
-                            <ul class="list-unstyled small text-muted">
-                                <li>• Moderate discussions</li>
-                                <li>• Help with events</li>
-                                <li>• Basic member support</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-3">
-                            <h6 class="text-primary">
-                                <i class="fas fa-user me-1"></i>Member
-                            </h6>
-                            <ul class="list-unstyled small text-muted">
-                                <li>• Participate in discussions</li>
-                                <li>• Attend events</li>
-                                <li>• Create discussion topics</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- RIGHT: Role Info + Placeholders -->
+    <div class="col-lg-4">
+      <!-- Role Info -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-sandstone"><h6 class="mb-0 text-forest"><i class="fas fa-info-circle me-1"></i>Role Permissions</h6></div>
+        <div class="card-body small text-muted">
+          <ul class="list-unstyled mb-2">
+            <li><i class="fas fa-crown text-warning me-1"></i><strong>Owner:</strong> full control, can promote/demote all.</li>
+            <li><i class="fas fa-star text-info me-1"></i><strong>Co-Host:</strong> manage members, create events, moderate.</li>
+            <li><i class="fas fa-shield text-success me-1"></i><strong>Moderator:</strong> assist events, help manage chats.</li>
+            <li><i class="fas fa-user text-primary me-1"></i><strong>Member:</strong> attend, chat, participate.</li>
+          </ul>
         </div>
+      </div>
+
+      <!-- Placeholder: Announcements -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-sandstone"><h6 class="mb-0 text-forest"><i class="fas fa-bullhorn me-1"></i>Group Announcements</h6></div>
+        <div class="card-body text-muted small">
+          <p>No announcements yet.</p>
+          <?php if (in_array($userRole, ['owner','co_host'])): ?>
+            <a href="#" class="btn btn-sm btn-forest"><i class="fas fa-plus me-1"></i>Create Announcement</a>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <!-- Placeholder: Group Settings -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-sandstone"><h6 class="mb-0 text-forest"><i class="fas fa-cog me-1"></i>Group Settings</h6></div>
+        <div class="card-body text-muted small">
+          <p>Future section for group privacy, image updates, and ownership transfer.</p>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
+
+<style>
+.text-forest { color:#2f6d3a; }
+.bg-sandstone { background:#f6f3ed; }
+.bg-forest { background:#2f6d3a; }
+.btn-forest { background:#2f6d3a; color:#fff; border-color:#2f6d3a; }
+.btn-forest:hover { background:#285d32; color:#fff; }
+.placeholder-banner { background:linear-gradient(135deg,#e9e4d8,#f6f3ed); border:2px dashed #ccc; }
+.card { border-radius:10px; }
+</style>
 
 <?php include '../src/views/layouts/footer.php'; ?>

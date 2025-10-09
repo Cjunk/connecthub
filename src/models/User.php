@@ -138,4 +138,63 @@ class User {
         $sql = "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = :id";
         $this->db->query($sql, [':id' => $userId]);
     }
+
+    /**
+     * Get all dashboard data in one optimized query
+     * Reduces multiple database calls for better performance
+     */
+    public function getDashboardData($userId) {
+        // Get user membership status and basic stats in one query
+        $sql = "
+            SELECT
+                u.membership_paid,
+                u.membership_expires_at,
+                u.role,
+                COUNT(DISTINCT gm.group_id) as groups_joined,
+                COUNT(DISTINCT ea.event_id) as events_attended,
+                COALESCE(SUM(pt.points), 0) as total_points
+            FROM users u
+            LEFT JOIN group_members gm ON u.id = gm.user_id AND gm.status = 1
+            LEFT JOIN event_attendees ea ON u.id = ea.user_id AND ea.status = 'attending'
+            LEFT JOIN points_transactions pt ON u.id = pt.user_id
+            WHERE u.id = :user_id AND u.status = 1
+            GROUP BY u.id, u.membership_paid, u.membership_expires_at, u.role
+        ";
+
+        $result = $this->db->fetch($sql, [':user_id' => $userId]);
+
+        if (!$result) {
+            return [
+                'has_membership' => false,
+                'stats' => [
+                    'groups_joined' => 0,
+                    'events_attended' => 0,
+                    'connections_made' => 0,
+                    'reviews_given' => 0
+                ]
+            ];
+        }
+
+        // Check membership status
+        $hasMembership = false;
+        if (in_array($result['role'], ['organizer', 'admin', 'super_admin'])) {
+            $hasMembership = true;
+        } elseif ($result['membership_paid'] && $result['membership_expires_at']) {
+            try {
+                $hasMembership = new DateTime() < new DateTime($result['membership_expires_at']);
+            } catch (Exception $e) {
+                $hasMembership = false;
+            }
+        }
+
+        return [
+            'has_membership' => $hasMembership,
+            'stats' => [
+                'groups_joined' => (int)$result['groups_joined'],
+                'events_attended' => (int)$result['events_attended'],
+                'connections_made' => (int)$result['events_attended'], // Using events attended as proxy for connections
+                'reviews_given' => 0 // TODO: Implement when review system is added
+            ]
+        ];
+    }
 }
