@@ -109,26 +109,19 @@ class User {
     public function hasMembership($userId) {
         $user = $this->findById($userId);
         if (!$user) return false;
-        
+
         // Organizers, admins, and super_admins don't need to pay
         if (in_array($user['role'], ['organizer', 'admin', 'super_admin'])) {
             return true;
         }
-        
-        // Check for membership_expires field (PostgreSQL style) or membership_expires_at (MySQL style)
-        $membershipField = null;
-        if (!empty($user['membership_expires'])) {
-            $membershipField = 'membership_expires';
-        } elseif (!empty($user['membership_expires_at'])) {
-            $membershipField = 'membership_expires_at';
-        }
-        
-        if (!$membershipField) {
+
+        // Check for membership_expires field (PostgreSQL style)
+        if (empty($user['membership_expires'])) {
             return false; // No membership expiration date set
         }
-        
+
         try {
-            return new DateTime() < new DateTime($user[$membershipField]);
+            return new DateTime() < new DateTime($user['membership_expires']);
         } catch (Exception $e) {
             return false; // Invalid date format
         }
@@ -147,8 +140,7 @@ class User {
         // Get user membership status and basic stats in one query
         $sql = "
             SELECT
-                u.membership_paid,
-                u.membership_expires_at,
+                u.membership_expires,
                 u.role,
                 COUNT(DISTINCT gm.group_id) as groups_joined,
                 COUNT(DISTINCT ea.event_id) as events_attended,
@@ -157,8 +149,8 @@ class User {
             LEFT JOIN group_members gm ON u.id = gm.user_id AND gm.status = 1
             LEFT JOIN event_attendees ea ON u.id = ea.user_id AND ea.status = 'attending'
             LEFT JOIN points_transactions pt ON u.id = pt.user_id
-            WHERE u.id = :user_id AND u.status = 1
-            GROUP BY u.id, u.membership_paid, u.membership_expires_at, u.role
+            WHERE u.id = :user_id AND u.status = 'active'
+            GROUP BY u.id, u.membership_expires, u.role
         ";
 
         $result = $this->db->fetch($sql, [':user_id' => $userId]);
@@ -179,9 +171,9 @@ class User {
         $hasMembership = false;
         if (in_array($result['role'], ['organizer', 'admin', 'super_admin'])) {
             $hasMembership = true;
-        } elseif ($result['membership_paid'] && $result['membership_expires_at']) {
+        } elseif ($result['membership_expires']) {
             try {
-                $hasMembership = new DateTime() < new DateTime($result['membership_expires_at']);
+                $hasMembership = new DateTime() < new DateTime($result['membership_expires']);
             } catch (Exception $e) {
                 $hasMembership = false;
             }

@@ -29,6 +29,51 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Event comments and discussion threads
+CREATE TABLE event_comments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    event_id INT NOT NULL,
+    user_id INT NOT NULL,
+    parent_id INT NULL,  -- For threaded replies (NULL = top-level comment)
+    comment TEXT NOT NULL,
+    status ENUM('active', 'hidden', 'deleted') DEFAULT 'active',
+    likes_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES event_comments(id) ON DELETE CASCADE
+);
+
+-- Event media attachments
+CREATE TABLE event_media (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    event_id INT NOT NULL,
+    user_id INT NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_type VARCHAR(50) NOT NULL,  -- 'image', 'video', 'document'
+    file_size INT NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    status ENUM('active', 'deleted') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Comment likes/reactions
+CREATE TABLE comment_likes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    comment_id INT NOT NULL,
+    user_id INT NOT NULL,
+    reaction_type ENUM('like', 'love', 'laugh', 'angry', 'sad') DEFAULT 'like',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_comment_reaction (comment_id, user_id),
+    FOREIGN KEY (comment_id) REFERENCES event_comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Groups table
 CREATE TABLE groups (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -176,4 +221,13 @@ CREATE INDEX idx_group_members_user ON group_members(user_id);
 CREATE INDEX idx_event_attendees_event ON event_attendees(event_id);
 CREATE INDEX idx_event_attendees_user ON event_attendees(user_id);
 CREATE INDEX idx_payments_user ON payments(user_id);
-CREATE INDEX idx_notifications_user ON notifications(user_id);
+CREATE INDEX idx_event_comments_event ON event_comments(event_id);
+CREATE INDEX idx_event_comments_user ON event_comments(user_id);
+CREATE INDEX idx_event_comments_parent ON event_comments(parent_id);
+CREATE INDEX idx_event_comments_status ON event_comments(status);
+CREATE INDEX idx_event_comments_created ON event_comments(created_at);
+CREATE INDEX idx_event_media_event ON event_media(event_id);
+CREATE INDEX idx_event_media_user ON event_media(user_id);
+CREATE INDEX idx_event_media_type ON event_media(file_type);
+CREATE INDEX idx_comment_likes_comment ON comment_likes(comment_id);
+CREATE INDEX idx_comment_likes_user ON comment_likes(user_id);

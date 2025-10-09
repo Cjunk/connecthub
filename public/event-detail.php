@@ -5,14 +5,16 @@
 
 session_start();
 
-require_once __DIR__ . '/../config/constants.php';            // ensure BASE_URL available early
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../config/bootstrap.php';                // ensure autoload/DB/helpers
 require_once __DIR__ . '/../src/helpers/functions.php';
 require_once __DIR__ . '/../src/models/Event.php';
-require_once __DIR__ . '/../src/models/Group.php';
 require_once __DIR__ . '/../src/models/User.php';
+require_once __DIR__ . '/../src/controllers/CommentController.php';
 
 $eventModel = new Event();
 $userModel  = new User();
+$commentController = new CommentController();
 
 $slug = $_GET['slug'] ?? '';
 if (!$slug) { header('Location: /events.php'); exit; }
@@ -21,14 +23,14 @@ $event = $eventModel->getBySlug($slug);
 if (!$event) { $_SESSION['error'] = "Event not found."; header('Location: /events.php'); exit; }
 
 $userId            = $_SESSION['user_id'] ?? null;
-$userRsvp          = $userId ? $eventModel->getUserRSVP($event['id'], $userId) : null;
 $userHasMembership = $userId ? $userModel->hasMembership($userId) : false;
+$userRsvp          = $userId ? $eventModel->getUserRSVP($event['id'], $userId) : null;
 $canManage         = $userId ? $eventModel->canManageEvent($event['id'], $userId) : false;
 
-$dt        = new DateTime("{$event['event_date']} {$event['start_time']}");
-$now       = new DateTime();
-$isUpcoming= $dt > $now;
-$isPast    = $dt < $now;
+$dt  = new DateTime("{$event['event_date']} {$event['start_time']}");
+$now = new DateTime();
+$isUpcoming = $dt > $now;
+$isPast     = $dt < $now;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'rsvp') {
     if (!$userId) { $_SESSION['error'] = "Please log in to RSVP to events."; header('Location: /login.php'); exit; }
@@ -124,9 +126,9 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                     <h5 class="mb-2"><i class="fas fa-map-marker-alt text-primary"></i> Location</h5>
                     <?php
                         $locType = $event['location_type'];
-                        $venue   = htmlspecialchars($event['venue_name']);
-                        $addr    = htmlspecialchars($event['venue_address']);
-                        $link    = htmlspecialchars($event['online_link']);
+                        $venue   = htmlspecialchars($event['venue_name'] ?? '');
+                        $addr    = htmlspecialchars($event['venue_address'] ?? '');
+                        $link    = htmlspecialchars($event['online_link'] ?? '');
                     ?>
                     <?php if ($locType === 'online'): ?>
                         <p class="mb-1"><span class="badge bg-info">Online Event</span></p>
@@ -174,6 +176,39 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                     <?php endif; ?>
                 </div>
             </div>
+
+            <!-- Comments Section -->
+            <?php if ($userId && $userHasMembership): ?>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-comments text-primary"></i> Event Discussion</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="comments-container">
+                            <?php /* IMPORTANT: echo the HTML returned by controller */ ?>
+                            <?= $commentController->renderComments($event['id']); ?>
+                        </div>
+                    </div>
+                </div>
+            <?php elseif (!$userId): ?>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body text-center">
+                        <i class="fas fa-comments fa-2x text-muted mb-3"></i>
+                        <h5>Join the Discussion</h5>
+                        <p class="text-muted">Please log in to participate in event discussions.</p>
+                        <a href="/login.php" class="btn btn-primary"><i class="fas fa-sign-in-alt"></i> Log In</a>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body text-center">
+                        <i class="fas fa-crown fa-2x text-warning mb-3"></i>
+                        <h5>Membership Required</h5>
+                        <p class="text-muted">Event discussions require an active membership.</p>
+                        <a href="/membership.php" class="btn btn-warning"><i class="fas fa-star"></i> Get Membership</a>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Sidebar -->
@@ -188,7 +223,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                             <a href="/login.php" class="btn btn-primary w-100"><i class="fas fa-sign-in-alt"></i> Log In to RSVP</a>
                         <?php elseif (!$userHasMembership): ?>
                             <h5 class="card-title">Membership Required</h5>
-                            <div class="alert-warning mb-3">
+                            <div class="alert alert-warning mb-3">
                                 <i class="fas fa-crown me-2"></i><strong>Premium Feature</strong><br>
                                 <small>RSVP to events requires an active membership.</small>
                             </div>
@@ -228,8 +263,8 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                     <?php
                         $stats = [
                             'Attendees'        => "<span class='text-success'>{$event['attendee_count']} going</span>",
-                            'Maybe attending'  => $event['maybe_count'] ? "<span class='text-warning'>{$event['maybe_count']}</span>" : '',
-                            'Spots available'  => $event['max_attendees'] ? max(0, $event['max_attendees'] - $event['attendee_count']) : '',
+                            'Maybe attending'  => !empty($event['maybe_count']) ? "<span class='text-warning'>{$event['maybe_count']}</span>" : '',
+                            'Spots available'  => !empty($event['max_attendees']) ? max(0, $event['max_attendees'] - $event['attendee_count']) : '',
                             'Price'            => $event['price'] > 0 ? '$'.number_format($event['price'],2) : 'Free',
                             'Organizer'        => htmlspecialchars($event['organizer_name']),
                         ];
@@ -279,4 +314,100 @@ function confirmCancelEvent() {
 </script>
 <?php endif; ?>
 
+<?php if ($userId && $userHasMembership): ?>
+<script>
+$(document).ready(function() {
+    // Submit comment
+    $(document).on('submit', '.comment-form', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: 'api/comments.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response) {
+                console.log('AJAX Success:', response);
+                if (response.success) {
+                    $('#comments-container').html(response.html);
+                    form.find('textarea').val('');
+                    form.find('input[type="file"]').val('');
+                } else {
+                    alert('Error: ' + (response.message || 'Unknown error'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('AJAX Error:', xhr.status, xhr.responseText, status, error);
+                alert('Failed to submit comment. Please try again.');
+            }
+        });
+    });
+
+    // Toggle like
+    $(document).on('click', '.like-btn', function(e) {
+        e.preventDefault();
+        const btn = $(this);
+        $.post('api/comments.php', {
+            action: 'toggle_like',
+            comment_id: btn.data('comment-id')
+        }, function(response) {
+            if (response.success) {
+                btn.find('.like-count').text(response.like_count);
+                btn.toggleClass('text-danger', response.user_liked);
+            } else {
+                alert('Error: ' + (response.message || 'Unknown error'));
+            }
+        }, 'json');
+    });
+
+    // Delete comment
+    $(document).on('click', '.delete-comment', function(e) {
+        e.preventDefault();
+        if (!confirm('Are you sure you want to delete this comment?')) return;
+        const commentId = $(this).data('comment-id');
+        $.post('api/comments.php', {
+            action: 'delete_comment',
+            comment_id: commentId
+        }, function(response) {
+            if (response.success) {
+                $('#comments-container').html(response.html);
+            } else {
+                alert('Error: ' + (response.message || 'Unknown error'));
+            }
+        }, 'json');
+    });
+
+    // Show reply form
+    $(document).on('click', '.reply-btn', function(e) {
+        e.preventDefault();
+        const id = $(this).data('comment-id');
+        $('.reply-form').not('#reply-form-' + id).slideUp();
+        $('#reply-form-' + id).slideToggle();
+    });
+
+    // File upload preview
+    $(document).on('change', '.media-upload', function() {
+        const file = this.files[0];
+        const preview = $(this).siblings('.file-preview');
+        if (!file) { preview.empty(); return; }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (file.type.startsWith('image/')) {
+                preview.html('<img src="' + e.target.result + '" class="img-thumbnail" style="max-width:200px;">');
+            } else {
+                preview.html('<div class="alert alert-info"><i class="fas fa-file"></i> ' + file.name + '</div>');
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
+<?php endif; ?>
+
 <?php require_once __DIR__ . '/../src/views/layouts/footer.php'; ?>
+
