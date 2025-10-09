@@ -1,272 +1,174 @@
 <?php
 /**
- * Event Detail Page
- * Display detailed information about an event and handle RSVPs
+ * ConnectHub - Event Detail Page (Lean + Fixed)
  */
 
 session_start();
+
+require_once __DIR__ . '/../config/constants.php';            // ensure BASE_URL available early
+require_once __DIR__ . '/../src/helpers/functions.php';
 require_once __DIR__ . '/../src/models/Event.php';
 require_once __DIR__ . '/../src/models/Group.php';
-require_once __DIR__ . '/../src/helpers/functions.php';
+require_once __DIR__ . '/../src/models/User.php';
 
-$event = new Event();
-$group = new Group();
-$errors = [];
-$success = '';
+$eventModel = new Event();
+$userModel  = new User();
 
-// Get event slug from URL
 $slug = $_GET['slug'] ?? '';
-if (empty($slug)) {
-    header('Location: /events.php');
-    exit;
+if (!$slug) { header('Location: /events.php'); exit; }
+
+$event = $eventModel->getBySlug($slug);
+if (!$event) { $_SESSION['error'] = "Event not found."; header('Location: /events.php'); exit; }
+
+$userId            = $_SESSION['user_id'] ?? null;
+$userRsvp          = $userId ? $eventModel->getUserRSVP($event['id'], $userId) : null;
+$userHasMembership = $userId ? $userModel->hasMembership($userId) : false;
+$canManage         = $userId ? $eventModel->canManageEvent($event['id'], $userId) : false;
+
+$dt        = new DateTime("{$event['event_date']} {$event['start_time']}");
+$now       = new DateTime();
+$isUpcoming= $dt > $now;
+$isPast    = $dt < $now;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'rsvp') {
+    if (!$userId) { $_SESSION['error'] = "Please log in to RSVP to events."; header('Location: /login.php'); exit; }
+    if (!$userHasMembership) { $_SESSION['error'] = "Membership required to RSVP to events. Please upgrade to continue."; header('Location: /membership.php'); exit; }
+    $status = $_POST['rsvp_status'] ?? 'going';
+    $notes  = trim($_POST['notes'] ?? '');
+    $ok = $eventModel->rsvp($event['id'], $userId, $status, $notes);
+    $_SESSION[$ok ? 'success' : 'error'] = $ok ? "Your RSVP has been updated!" : "Failed to update RSVP. Please try again.";
+    header("Location: /event-detail.php?slug=".$slug); exit;
 }
 
-// Get event details
-$eventData = $event->getBySlug($slug);
-if (!$eventData) {
-    $_SESSION['error'] = "Event not found.";
-    header('Location: /events.php');
-    exit;
-}
+$attendees = $eventModel->getAttendees($event['id'], 'going');
+$maybe     = $eventModel->getAttendees($event['id'], 'maybe');
 
-// Get user's RSVP status if logged in
-$userRsvp = null;
-$userHasMembership = false;
-if (isset($_SESSION['user_id'])) {
-    $userRsvp = $event->getUserRSVP($eventData['id'], $_SESSION['user_id']);
-    
-    // Check if user has active membership
-    require_once '../src/models/User.php';
-    $userModel = new User();
-    $userHasMembership = $userModel->hasMembership($_SESSION['user_id']);
-}
-
-// Handle RSVP submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'rsvp') {
-    if (!isset($_SESSION['user_id'])) {
-        $_SESSION['error'] = "Please log in to RSVP to events.";
-        header('Location: /login.php');
-        exit;
-    }
-    
-    // Check if user has active membership
-    require_once '../src/models/User.php';
-    $userModel = new User();
-    if (!$userModel->hasMembership($_SESSION['user_id'])) {
-        $_SESSION['error'] = "Membership required to RSVP to events. Please upgrade to continue.";
-        header('Location: /membership.php');
-        exit;
-    }
-    
-    $rsvpStatus = $_POST['rsvp_status'] ?? 'going';
-    $notes = trim($_POST['notes'] ?? '');
-    
-    if ($event->rsvp($eventData['id'], $_SESSION['user_id'], $rsvpStatus, $notes)) {
-        $_SESSION['success'] = "Your RSVP has been updated!";
-        header('Location: /event-detail.php?slug=' . $slug);
-        exit;
-    } else {
-        $errors[] = "Failed to update RSVP. Please try again.";
-    }
-}
-
-// Get event attendees
-$attendees = $event->getAttendees($eventData['id'], 'going');
-$maybeAttendees = $event->getAttendees($eventData['id'], 'maybe');
-
-// Check if user can manage this event
-$canManage = false;
-if (isset($_SESSION['user_id'])) {
-    $canManage = $event->canManageEvent($eventData['id'], $_SESSION['user_id']);
-}
-
-// Format date and time
-$eventDateTime = new DateTime($eventData['event_date'] . ' ' . $eventData['start_time']);
-$isUpcoming = $eventDateTime > new DateTime();
-$isPast = $eventDateTime < new DateTime();
-
-$pageTitle = htmlspecialchars($eventData['title']);
+$pageTitle = htmlspecialchars($event['title']);
 require_once __DIR__ . '/../src/views/layouts/header.php';
 ?>
 
 <div class="container mt-4">
-    <!-- Event Header -->
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex align-items-center mb-4">
-                <?php 
-                $from = $_GET['from'] ?? 'group';
-                if ($from === 'dashboard'): ?>
-                    <a href="<?= BASE_URL ?>/dashboard.php" 
-                       class="btn btn-outline-secondary me-3">
-                        <i class="fas fa-arrow-left"></i> Back to Dashboard
-                    </a>
-                <?php else: ?>
-                    <a href="<?= BASE_URL ?>/group-detail.php?slug=<?= htmlspecialchars($eventData['group_slug']) ?>" 
-                       class="btn btn-outline-secondary me-3">
-                        <i class="fas fa-arrow-left"></i> Back to Group
-                    </a>
-                <?php endif; ?>
-                <div class="flex-grow-1">
-                    <h1 class="mb-1"><?= htmlspecialchars($eventData['title']) ?></h1>
-                    <p class="text-muted mb-0">
-                        Organized by <strong><?= htmlspecialchars($eventData['group_name']) ?></strong>
-                    </p>
-                </div>
-                <?php if ($canManage): ?>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-cog"></i> Manage
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/edit-event.php?id=<?= $eventData['id'] ?>">
-                                <i class="fas fa-edit"></i> Edit Event
-                            </a></li>
-                            <li><a class="dropdown-item" href="/event-attendees.php?id=<?= $eventData['id'] ?>">
-                                <i class="fas fa-users"></i> View Attendees
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#" onclick="confirmCancelEvent()">
-                                <i class="fas fa-times-circle"></i> Cancel Event
-                            </a></li>
-                        </ul>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- Error/Success Messages -->
-    <?php if (!empty($errors)): ?>
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                <?php foreach ($errors as $error): ?>
-                    <li><?= htmlspecialchars($error) ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
+    <!-- Flash messages -->
+    <?php if (!empty($_SESSION['error'])): ?>
+        <div class="alert alert-danger"><?= htmlspecialchars($_SESSION['error']); ?></div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+    <?php if (!empty($_SESSION['success'])): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']); ?></div>
+        <?php unset($_SESSION['success']); ?>
     <?php endif; ?>
 
+    <!-- Header + Back -->
+    <div class="d-flex align-items-center mb-4">
+        <?php $from = $_GET['from'] ?? 'group'; ?>
+        <?php if ($from === 'dashboard'): ?>
+            <a href="<?= BASE_URL ?>/dashboard.php" class="btn btn-outline-secondary me-3">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        <?php else: ?>
+            <a href="<?= BASE_URL ?>/group-detail.php?slug=<?= htmlspecialchars($event['group_slug']) ?>" class="btn btn-outline-secondary me-3">
+                <i class="fas fa-arrow-left"></i> Back to Group
+            </a>
+        <?php endif; ?>
+
+        <div class="flex-grow-1">
+            <h1 class="mb-1"><?= $pageTitle ?></h1>
+            <p class="text-muted mb-0">Organized by <strong><?= htmlspecialchars($event['group_name']) ?></strong></p>
+        </div>
+
+        <?php if ($canManage): ?>
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-cog"></i> Manage</button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/edit-event.php?id=<?= $event['id'] ?>"><i class="fas fa-edit"></i> Edit Event</a></li>
+                    <li><a class="dropdown-item" href="/event-attendees.php?id=<?= $event['id'] ?>"><i class="fas fa-users"></i> View Attendees</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmCancelEvent()"><i class="fas fa-times-circle"></i> Cancel Event</a></li>
+                </ul>
+            </div>
+        <?php endif; ?>
+    </div>
+
     <div class="row">
-        <!-- Main Event Content -->
+        <!-- Main -->
         <div class="col-lg-8">
-            <!-- Event Status Badge -->
-            <?php if ($eventData['status'] === 'cancelled'): ?>
-                <div class="alert alert-danger mb-4">
-                    <i class="fas fa-exclamation-triangle"></i> This event has been cancelled.
-                </div>
+            <?php if ($event['status'] === 'cancelled'): ?>
+                <div class="alert alert-danger mb-4"><i class="fas fa-exclamation-triangle"></i> This event has been cancelled.</div>
             <?php elseif ($isPast): ?>
-                <div class="alert alert-info mb-4">
-                    <i class="fas fa-check-circle"></i> This event has ended.
-                </div>
+                <div class="alert alert-info mb-4"><i class="fas fa-check-circle"></i> This event has ended.</div>
             <?php endif; ?>
 
-            <!-- Event Details Card -->
             <div class="card shadow-sm mb-4">
-                <?php if ($eventData['cover_image']): ?>
-                    <div class="card-img-top">
-                        <img src="http://localhost/<?= htmlspecialchars($eventData['cover_image']) ?>" 
-                             alt="<?= htmlspecialchars($eventData['title']) ?>" 
-                             class="img-fluid w-100" style="height: 300px; object-fit: cover;">
-                    </div>
+                <?php if ($event['cover_image']): ?>
+                    <img src="<?= BASE_URL . '/' . htmlspecialchars($event['cover_image']) ?>" alt="<?= $pageTitle ?>" class="img-fluid w-100 rounded-top" style="height:300px;object-fit:cover;">
                 <?php endif; ?>
                 <div class="card-body">
-                    <!-- Date & Time -->
-                    <div class="row mb-4">
-                        <div class="col-auto">
-                            <div class="event-date-badge text-center p-3 bg-primary text-white rounded">
-                                <div class="fw-bold"><?= $eventDateTime->format('M') ?></div>
-                                <div class="h4 mb-0"><?= $eventDateTime->format('d') ?></div>
-                            </div>
+                    <!-- Date/time -->
+                    <div class="d-flex mb-4">
+                        <div class="p-3 text-white bg-primary rounded text-center me-3">
+                            <div class="fw-bold"><?= $dt->format('M') ?></div>
+                            <div class="h4 mb-0"><?= $dt->format('d') ?></div>
                         </div>
-                        <div class="col">
-                            <h5 class="mb-1">
-                                <i class="fas fa-calendar text-primary"></i> 
-                                <?= $eventDateTime->format('l, F j, Y') ?>
-                            </h5>
-                            <p class="text-muted mb-1">
-                                <i class="fas fa-clock text-primary"></i> 
-                                <?= date('g:i A', strtotime($eventData['start_time'])) ?>
-                                <?php if ($eventData['end_time']): ?>
-                                    - <?= date('g:i A', strtotime($eventData['end_time'])) ?>
-                                <?php endif; ?>
+                        <div>
+                            <h5><i class="fas fa-calendar text-primary"></i> <?= $dt->format('l, F j, Y') ?></h5>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-clock text-primary"></i>
+                                <?= date('g:i A', strtotime($event['start_time'])) ?>
+                                <?= $event['end_time'] ? ' - ' . date('g:i A', strtotime($event['end_time'])) : '' ?>
                             </p>
-                            <small class="text-muted"><?= htmlspecialchars($eventData['timezone'] ?? 'America/Phoenix') ?></small>
+                            <small class="text-muted"><?= htmlspecialchars($event['timezone'] ?? 'America/Phoenix') ?></small>
                         </div>
                     </div>
 
                     <!-- Location -->
-                    <div class="mb-4">
-                        <h5 class="mb-2">
-                            <i class="fas fa-map-marker-alt text-primary"></i> Location
-                        </h5>
-                        <?php if ($eventData['location_type'] === 'online'): ?>
-                            <p class="mb-1"><span class="badge bg-info">Online Event</span></p>
-                            <?php if ($eventData['online_link'] && $userRsvp && $userRsvp['status'] === 'going'): ?>
-                                <a href="<?= htmlspecialchars($eventData['online_link']) ?>" 
-                                   class="btn btn-sm btn-outline-primary" target="_blank">
-                                    <i class="fas fa-video"></i> Join Online
-                                </a>
-                            <?php elseif ($eventData['online_link']): ?>
-                                <p class="text-muted"><i class="fas fa-lock"></i> Online link available to confirmed attendees</p>
-                            <?php endif; ?>
-                        <?php elseif ($eventData['location_type'] === 'hybrid'): ?>
-                            <p class="mb-1"><span class="badge bg-warning">Hybrid Event</span></p>
-                            <p class="mb-1">
-                                <strong><?= htmlspecialchars($eventData['venue_name']) ?></strong><br>
-                                <?= htmlspecialchars($eventData['venue_address']) ?>
-                            </p>
-                            <?php if ($eventData['online_link'] && $userRsvp && $userRsvp['status'] === 'going'): ?>
-                                <a href="<?= htmlspecialchars($eventData['online_link']) ?>" 
-                                   class="btn btn-sm btn-outline-primary" target="_blank">
-                                    <i class="fas fa-video"></i> Join Online
-                                </a>
-                            <?php elseif ($eventData['online_link']): ?>
-                                <p class="text-muted"><i class="fas fa-lock"></i> Online link available to confirmed attendees</p>
-                            <?php endif; ?>
-                        <?php else: ?>
-                            <p class="mb-1"><span class="badge bg-success">In-Person Event</span></p>
-                            <p class="mb-0">
-                                <strong><?= htmlspecialchars($eventData['venue_name']) ?></strong><br>
-                                <?= htmlspecialchars($eventData['venue_address']) ?>
-                            </p>
+                    <h5 class="mb-2"><i class="fas fa-map-marker-alt text-primary"></i> Location</h5>
+                    <?php
+                        $locType = $event['location_type'];
+                        $venue   = htmlspecialchars($event['venue_name']);
+                        $addr    = htmlspecialchars($event['venue_address']);
+                        $link    = htmlspecialchars($event['online_link']);
+                    ?>
+                    <?php if ($locType === 'online'): ?>
+                        <p class="mb-1"><span class="badge bg-info">Online Event</span></p>
+                        <?php if ($link && $userRsvp && $userRsvp['status'] === 'going'): ?>
+                            <a href="<?= $link ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-video"></i> Join Online</a>
+                        <?php elseif ($link): ?>
+                            <p class="text-muted"><i class="fas fa-lock"></i> Online link available to confirmed attendees</p>
                         <?php endif; ?>
-                    </div>
+                    <?php elseif ($locType === 'hybrid'): ?>
+                        <p class="mb-1"><span class="badge bg-warning">Hybrid Event</span></p>
+                        <p class="mb-1"><strong><?= $venue ?></strong><br><?= $addr ?></p>
+                        <?php if ($link && $userRsvp && $userRsvp['status'] === 'going'): ?>
+                            <a href="<?= $link ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-video"></i> Join Online</a>
+                        <?php elseif ($link): ?>
+                            <p class="text-muted"><i class="fas fa-lock"></i> Online link available to confirmed attendees</p>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <p class="mb-1"><span class="badge bg-success">In-Person Event</span></p>
+                        <p class="mb-0"><strong><?= $venue ?></strong><br><?= $addr ?></p>
+                    <?php endif; ?>
 
-                    <!-- Description -->
-                    <?php if ($eventData['description']): ?>
-                        <div class="mb-4">
-                            <h5 class="mb-2">
-                                <i class="fas fa-info-circle text-primary"></i> About This Event
-                            </h5>
-                            <div class="event-description">
-                                <?= nl2br(htmlspecialchars($eventData['description'])) ?>
-                            </div>
+                    <!-- Description / Requirements -->
+                    <?php if (!empty($event['description'])): ?>
+                        <div class="mt-4">
+                            <h5 class="mb-2"><i class="fas fa-info-circle text-primary"></i> About This Event</h5>
+                            <div class="event-description"><?= nl2br(htmlspecialchars($event['description'])) ?></div>
                         </div>
                     <?php endif; ?>
 
-                    <!-- Requirements -->
-                    <?php if ($eventData['requirements']): ?>
-                        <div class="mb-4">
-                            <h5 class="mb-2">
-                                <i class="fas fa-list-check text-primary"></i> What to Bring / Requirements
-                            </h5>
-                            <div class="alert alert-light">
-                                <?= nl2br(htmlspecialchars($eventData['requirements'])) ?>
-                            </div>
+                    <?php if (!empty($event['requirements'])): ?>
+                        <div class="mt-4">
+                            <h5 class="mb-2"><i class="fas fa-list-check text-primary"></i> What to Bring / Requirements</h5>
+                            <div class="alert alert-light"><?= nl2br(htmlspecialchars($event['requirements'])) ?></div>
                         </div>
                     <?php endif; ?>
 
                     <!-- Tags -->
-                    <?php if (!empty($eventData['tags'])): ?>
-                        <div class="mb-4">
+                    <?php if (!empty($event['tags'])): ?>
+                        <div class="mt-4">
                             <h6 class="mb-2">Tags:</h6>
-                            <?php 
-                            $tags = str_getcsv($eventData['tags'], ',', '"');
-                            foreach ($tags as $tag): 
-                                $tag = trim($tag, '{}');
-                            ?>
-                                <span class="badge bg-secondary me-1"><?= htmlspecialchars($tag) ?></span>
+                            <?php foreach (str_getcsv($event['tags'], ',','"') as $tag): ?>
+                                <span class="badge bg-secondary me-1"><?= htmlspecialchars(trim($tag, '{}')) ?></span>
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
@@ -276,67 +178,43 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
 
         <!-- Sidebar -->
         <div class="col-lg-4">
-            <!-- RSVP Card -->
-            <?php if ($isUpcoming && $eventData['status'] !== 'cancelled'): ?>
+            <!-- RSVP -->
+            <?php if ($isUpcoming && $event['status'] !== 'cancelled'): ?>
                 <div class="card shadow-sm mb-4">
                     <div class="card-body">
-                        <?php if (!isset($_SESSION['user_id'])): ?>
+                        <?php if (!$userId): ?>
                             <h5 class="card-title">Join This Event</h5>
                             <p class="text-muted">Please log in to RSVP to this event.</p>
-                            <a href="/login.php" class="btn btn-primary w-100">
-                                <i class="fas fa-sign-in-alt"></i> Log In to RSVP
-                            </a>
+                            <a href="/login.php" class="btn btn-primary w-100"><i class="fas fa-sign-in-alt"></i> Log In to RSVP</a>
                         <?php elseif (!$userHasMembership): ?>
                             <h5 class="card-title">Membership Required</h5>
                             <div class="alert-warning mb-3">
-                                <i class="fas fa-crown me-2"></i>
-                                <strong>Premium Feature</strong><br>
+                                <i class="fas fa-crown me-2"></i><strong>Premium Feature</strong><br>
                                 <small>RSVP to events requires an active membership.</small>
                             </div>
-                            <a href="/membership.php" class="btn btn-warning w-100">
-                                <i class="fas fa-star me-2"></i>Get Membership - $100/year
-                            </a>
+                            <a href="/membership.php" class="btn btn-warning w-100"><i class="fas fa-star me-2"></i>Get Membership - $100/year</a>
                         <?php else: ?>
                             <h5 class="card-title">Your RSVP</h5>
                             <form method="POST">
                                 <input type="hidden" name="action" value="rsvp">
-                                
-                                <div class="mb-3">
+                                <?php
+                                    $iconMap = ['going'=>'check', 'maybe'=>'question', 'not_going'=>'times'];
+                                    foreach (['going'=>'success','maybe'=>'warning','not_going'=>'danger'] as $val=>$color):
+                                        $checked = ($userRsvp && $userRsvp['status'] === $val) ? 'checked' : '';
+                                        $icon = $iconMap[$val];
+                                ?>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="radio" name="rsvp_status" 
-                                               id="rsvp_going" value="going" 
-                                               <?= ($userRsvp && $userRsvp['status'] === 'going') ? 'checked' : '' ?>>
-                                        <label class="form-check-label fw-bold text-success" for="rsvp_going">
-                                            <i class="fas fa-check-circle"></i> Going
+                                        <input class="form-check-input" type="radio" name="rsvp_status" id="rsvp_<?= $val ?>" value="<?= $val ?>" <?= $checked ?>>
+                                        <label class="form-check-label fw-bold text-<?= $color ?>" for="rsvp_<?= $val ?>">
+                                            <i class="fas fa-<?= $icon ?>-circle"></i> <?= $val === 'not_going' ? "Can't go" : ucfirst(str_replace('_',' ',$val)) ?>
                                         </label>
                                     </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="radio" name="rsvp_status" 
-                                               id="rsvp_maybe" value="maybe" 
-                                               <?= ($userRsvp && $userRsvp['status'] === 'maybe') ? 'checked' : '' ?>>
-                                        <label class="form-check-label fw-bold text-warning" for="rsvp_maybe">
-                                            <i class="fas fa-question-circle"></i> Maybe
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="radio" name="rsvp_status" 
-                                               id="rsvp_not_going" value="not_going" 
-                                               <?= ($userRsvp && $userRsvp['status'] === 'not_going') ? 'checked' : '' ?>>
-                                        <label class="form-check-label fw-bold text-danger" for="rsvp_not_going">
-                                            <i class="fas fa-times-circle"></i> Can't go
-                                        </label>
-                                    </div>
-                                </div>
-                                
+                                <?php endforeach; ?>
                                 <div class="mb-3">
                                     <label for="notes" class="form-label">Notes (optional)</label>
-                                    <textarea class="form-control" id="notes" name="notes" rows="2" 
-                                              placeholder="Any special requirements or notes..."><?= $userRsvp ? htmlspecialchars($userRsvp['notes']) : '' ?></textarea>
+                                    <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Any special requirements or notes..."><?= $userRsvp ? htmlspecialchars($userRsvp['notes']) : '' ?></textarea>
                                 </div>
-                                
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fas fa-calendar-check"></i> Update RSVP
-                                </button>
+                                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-calendar-check"></i> Update RSVP</button>
                             </form>
                         <?php endif; ?>
                     </div>
@@ -347,69 +225,42 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
                     <h5 class="card-title">Event Details</h5>
-                    
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Attendees:</span>
-                        <strong class="text-success"><?= $eventData['attendee_count'] ?> going</strong>
-                    </div>
-                    
-                    <?php if ($eventData['maybe_count'] > 0): ?>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Maybe attending:</span>
-                            <strong class="text-warning"><?= $eventData['maybe_count'] ?></strong>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <?php if ($eventData['max_attendees']): ?>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Spots available:</span>
-                            <strong><?= max(0, $eventData['max_attendees'] - $eventData['attendee_count']) ?></strong>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Price:</span>
-                        <strong><?= $eventData['price'] > 0 ? '$' . number_format($eventData['price'], 2) : 'Free' ?></strong>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <span>Organizer:</span>
-                        <strong><?= htmlspecialchars($eventData['organizer_name']) ?></strong>
-                    </div>
+                    <?php
+                        $stats = [
+                            'Attendees'        => "<span class='text-success'>{$event['attendee_count']} going</span>",
+                            'Maybe attending'  => $event['maybe_count'] ? "<span class='text-warning'>{$event['maybe_count']}</span>" : '',
+                            'Spots available'  => $event['max_attendees'] ? max(0, $event['max_attendees'] - $event['attendee_count']) : '',
+                            'Price'            => $event['price'] > 0 ? '$'.number_format($event['price'],2) : 'Free',
+                            'Organizer'        => htmlspecialchars($event['organizer_name']),
+                        ];
+                        foreach ($stats as $label => $val) {
+                            if ($val !== '' && $val !== null) {
+                                echo "<div class='d-flex justify-content-between mb-2'><span>$label:</span><strong>$val</strong></div>";
+                            }
+                        }
+                    ?>
                 </div>
             </div>
 
-            <!-- Attendees Preview -->
+            <!-- Attendees -->
             <?php if (!empty($attendees)): ?>
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">Attendees (<?= count($attendees) ?>)</h5>
-                        
-                        <div class="attendees-list">
-                            <?php foreach (array_slice($attendees, 0, 10) as $attendee): ?>
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="avatar-sm me-2">
-                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
-                                             style="width: 32px; height: 32px; font-size: 14px;">
-                                            <?= strtoupper(substr($attendee['name'], 0, 1)) ?>
-                                        </div>
-                                    </div>
-                                    <span class="small"><?= htmlspecialchars($attendee['name']) ?></span>
+                        <?php foreach (array_slice($attendees, 0, 10) as $a): ?>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                     style="width:32px;height:32px;font-size:14px;">
+                                    <?= strtoupper(substr($a['name'], 0, 1)) ?>
                                 </div>
-                            <?php endforeach; ?>
-                            
-                            <?php if (count($attendees) > 10): ?>
-                                <div class="small text-muted">
-                                    And <?= count($attendees) - 10 ?> more...
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        
+                                <span class="small"><?= htmlspecialchars($a['name']) ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if (count($attendees) > 10): ?>
+                            <div class="small text-muted">And <?= count($attendees) - 10 ?> more...</div>
+                        <?php endif; ?>
                         <?php if ($canManage): ?>
-                            <a href="/event-attendees.php?id=<?= $eventData['id'] ?>" 
-                               class="btn btn-sm btn-outline-primary w-100 mt-3">
-                                View All Attendees
-                            </a>
+                            <a href="/event-attendees.php?id=<?= $event['id'] ?>" class="btn btn-sm btn-outline-primary w-100 mt-3">View All Attendees</a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -422,8 +273,7 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
 <script>
 function confirmCancelEvent() {
     if (confirm('Are you sure you want to cancel this event? This action cannot be undone.')) {
-        // Add cancel event functionality here
-        window.location.href = '/cancel-event.php?id=<?= $eventData['id'] ?>';
+        window.location.href = '/cancel-event.php?id=<?= $event['id'] ?>';
     }
 }
 </script>

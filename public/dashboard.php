@@ -51,23 +51,6 @@ include '../src/views/layouts/header.php';
 
 <div class="container">
 
-    <!-- === WELCOME === -->
-    <div class="alert alert-info border-0 shadow-sm mb-4 rounded-4" style="background:linear-gradient(135deg,#e3f2fd 0%,#f3e5f5 100%)">
-        <div class="d-flex align-items-center">
-            <img src="<?= BASE_URL; ?>/assets/images/welcome-banner.png"
-                 alt="Welcome Banner" width="60" height="60"
-                 class="rounded-circle me-3" style="object-fit:cover;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.1)"
-                 onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-            <i class="fas fa-user-circle fa-2x text-primary" style="display:none"></i>
-            <div>
-                <h4 class="fw-bold text-primary mb-1">
-                    Welcome back, <?= htmlspecialchars(explode(' ', $currentUser['name'])[0]); ?>!
-                </h4>
-                <p class="text-muted mb-0">Ready to connect with your community today?</p>
-            </div>
-        </div>
-    </div>
-
     <?php if ($needsOnboarding): ?>
     <!-- === ONBOARDING === -->
     <?php
