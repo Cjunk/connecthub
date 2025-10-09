@@ -1,39 +1,36 @@
 <?php
+// === INITIALIZATION ===
 require_once '../config/constants.php';
 require_once '../config/bootstrap.php';
-require_once '../config/ads.php'; // Add ad configuration
+require_once '../config/ads.php';
 
-// Ensure User model is loaded
-require_once '../src/models/User.php';
-
-// Check if user is logged in
+// === AUTHENTICATION CHECK ===
 if (!isLoggedIn()) {
     redirect(BASE_URL . '/login.php');
 }
 
+// === MODELS & DATA LOADING ===
+require_once '../src/models/User.php';
+require_once '../src/models/Group.php';
+require_once '../src/models/Event.php';
+
 $currentUser = getCurrentUser();
 $pageTitle = 'Dashboard';
 
-// Load group data
-require_once '../src/models/Group.php';
-require_once '../src/models/Event.php';
+// Initialize models
+$userModel = new User();
 $groupModel = new Group();
 $eventModel = new Event();
 
-// Get user's groups
-$userModel = new User();
-$groupModel = new Group();
+// === USER DATA RETRIEVAL ===
 $userGroups = $groupModel->getUserGroups($currentUser['id']);
 $groupCount = count($userGroups);
-
-// Check membership status
 $hasMembership = $userModel->hasMembership($currentUser['id']);
-
-// Get upcoming events for the user
 $upcomingEvents = $eventModel->getUpcomingForUser($currentUser['id'], 5);
 
-// Check if user is new (registered in last 24 hours)
+// === USER STATUS CALCULATIONS ===
 $isNewUser = (new DateTime($currentUser['created_at']))->diff(new DateTime())->days === 0;
+$needsOnboarding = ($groupCount == 0 && !$hasMembership);
 
 ?>
 
@@ -68,8 +65,8 @@ $isNewUser = (new DateTime($currentUser['created_at']))->diff(new DateTime())->d
         </div>
     </div>
 
-    <?php if (count($userGroups) == 0 && !$hasMembership): ?>
-    <!-- New User Getting Started Section -->
+    <?php if ($needsOnboarding): ?>
+    <!-- === NEW USER ONBOARDING SECTION === -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #fff3cd 0%, #d1ecf1 100%); border-radius: 15px;">
@@ -151,9 +148,9 @@ $isNewUser = (new DateTime($currentUser['created_at']))->diff(new DateTime())->d
     </div>
     <?php endif; ?>
 
-    <!-- Compact Stats, Quick Actions & Ad Space Row -->
+    <!-- === DASHBOARD STATS & ACTIONS ROW === -->
     <div class="row mb-4">
-        <!-- Compact Stats - Left Side -->
+        <!-- User Statistics -->
         <div class="col-lg-6">
             <div class="row">
                 <div class="col-6 mb-3">
@@ -248,8 +245,9 @@ $isNewUser = (new DateTime($currentUser['created_at']))->diff(new DateTime())->d
         </div>
     </div>
 
+    <!-- === MAIN DASHBOARD CONTENT === -->
     <div class="row">
-        <!-- Main Content -->
+        <!-- Events & Activity Section -->
         <div class="col-lg-8">
             <!-- Upcoming Events -->
             <div class="card mb-4">

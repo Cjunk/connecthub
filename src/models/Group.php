@@ -228,6 +228,19 @@ class Group {
     }
     
     /**
+     * Get count of groups user has joined
+     */
+    public function getUserGroupCount($userId) {
+        $sql = "SELECT COUNT(*) as count
+                FROM group_memberships gm
+                JOIN groups g ON gm.group_id = g.id
+                WHERE gm.user_id = :user_id AND gm.status = 'active' AND g.status = 'active'";
+        
+        $result = $this->db->fetch($sql, [':user_id' => $userId]);
+        return $result ? $result['count'] : 0;
+    }
+    
+    /**
      * Get group members
      */
     public function getMembers($groupId) {
