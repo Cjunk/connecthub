@@ -322,6 +322,7 @@ $(document).ready(function() {
         e.preventDefault();
         const form = $(this);
         const formData = new FormData(this);
+        formData.append('action', 'submit_comment');
 
         $.ajax({
             url: 'api/comments.php',
@@ -351,10 +352,11 @@ $(document).ready(function() {
     $(document).on('click', '.like-btn', function(e) {
         e.preventDefault();
         const btn = $(this);
-        $.post('api/comments.php', {
-            action: 'toggle_like',
-            comment_id: btn.data('comment-id')
-        }, function(response) {
+        const formData = new FormData();
+        formData.append('action', 'toggle_like');
+        formData.append('comment_id', btn.data('comment-id'));
+
+        $.post('api/comments.php', formData, function(response) {
             if (response.success) {
                 btn.find('.like-count').text(response.like_count);
                 btn.toggleClass('text-danger', response.user_liked);
@@ -369,10 +371,11 @@ $(document).ready(function() {
         e.preventDefault();
         if (!confirm('Are you sure you want to delete this comment?')) return;
         const commentId = $(this).data('comment-id');
-        $.post('api/comments.php', {
-            action: 'delete_comment',
-            comment_id: commentId
-        }, function(response) {
+        const formData = new FormData();
+        formData.append('action', 'delete_comment');
+        formData.append('comment_id', commentId);
+
+        $.post('api/comments.php', formData, function(response) {
             if (response.success) {
                 $('#comments-container').html(response.html);
             } else {
