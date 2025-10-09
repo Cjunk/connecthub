@@ -356,14 +356,26 @@ $(document).ready(function() {
         formData.append('action', 'toggle_like');
         formData.append('comment_id', btn.data('comment-id'));
 
-        $.post('api/comments.php', formData, function(response) {
-            if (response.success) {
-                btn.find('.like-count').text(response.like_count);
-                btn.toggleClass('text-danger', response.user_liked);
-            } else {
-                alert('Error: ' + (response.message || 'Unknown error'));
+        $.ajax({
+            url: 'api/comments.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    btn.find('.like-count').text(response.like_count);
+                    btn.toggleClass('text-danger', response.user_liked);
+                } else {
+                    alert('Error: ' + (response.message || 'Unknown error'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('AJAX Error:', xhr.status, xhr.responseText, status, error);
+                alert('Failed to toggle like. Please try again.');
             }
-        }, 'json');
+        });
     });
 
     // Delete comment
@@ -375,13 +387,25 @@ $(document).ready(function() {
         formData.append('action', 'delete_comment');
         formData.append('comment_id', commentId);
 
-        $.post('api/comments.php', formData, function(response) {
-            if (response.success) {
-                $('#comments-container').html(response.html);
-            } else {
-                alert('Error: ' + (response.message || 'Unknown error'));
+        $.ajax({
+            url: 'api/comments.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $('#comments-container').html(response.html);
+                } else {
+                    alert('Error: ' + (response.message || 'Unknown error'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('AJAX Error:', xhr.status, xhr.responseText, status, error);
+                alert('Failed to delete comment. Please try again.');
             }
-        }, 'json');
+        });
     });
 
     // Show reply form
