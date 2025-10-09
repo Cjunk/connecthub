@@ -53,10 +53,10 @@
         </div>
     </footer>
     
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS with performance optimizations -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <!-- Custom JS -->
-    <script src="assets/js/main.js"></script>
+    <script src="assets/js/main.js" defer></script>
     <!-- Mobile Optimizations - DISABLED -->
     <!-- <script src="<?php echo BASE_URL; ?>/assets/js/mobile-optimizations.js"></script> -->
     

@@ -21,8 +21,11 @@ if (!$needsPayment) {
 }
 
 // Set membership fee (from constants)
-$membershipFee = 50.00; // Annual membership fee
+$membershipFee = 100.00; // Annual membership fee
 $currency = 'USD';
+
+// Check if user is new (registered in last 24 hours)
+$isNewUser = (new DateTime($currentUser['created_at']))->diff(new DateTime())->days === 0;
 
 ?>
 

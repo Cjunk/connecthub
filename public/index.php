@@ -170,7 +170,7 @@ $pageTitle = 'Welcome to ConnectHub';
 
 <!-- CTA Section -->
 <?php if (!isLoggedIn()): ?>
-<section class="py-5 bg-primary text-white">
+<section class="py-5 text-white" style="background: linear-gradient(135deg, #1e5f2a 0%, #2d8f3f 100%);">
     <div class="container text-center">
         <h2 class="display-5 fw-bold mb-3">Ready to Get Started?</h2>
         <p class="lead mb-4">Join our community and start making connections today!</p>
@@ -183,7 +183,7 @@ $pageTitle = 'Welcome to ConnectHub';
 
 <style>
 .hero-section {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    background: linear-gradient(135deg, #1e5f2a 0%, #2d8f3f 50%, #4db365 100%);
 }
 .min-vh-50 {
     min-height: 50vh;

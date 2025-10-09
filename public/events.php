@@ -22,9 +22,13 @@ $upcomingOnly = isset($_GET['upcoming_only']) ? true : false;
 
 // Build filters
 $filters = [
-    'upcoming_only' => $upcomingOnly,
-    'limit' => 20
+    'upcoming_only' => $upcomingOnly
 ];
+
+// Only add limit if no specific filters are applied
+if (empty($search) && empty($groupId) && empty($locationType) && empty($dateFrom) && empty($dateTo)) {
+    $filters['limit'] = 20;
+}
 
 if (!empty($search)) {
     $filters['search'] = $search;
@@ -161,78 +165,116 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
             </div>
         <?php else: ?>
             <?php foreach ($events as $eventItem): ?>
-                <div class="col-lg-6 mb-4">
-                    <div class="card h-100 shadow-sm event-card">
-                        <div class="card-body d-flex flex-column">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card h-100 event-card overflow-hidden">
+                        <!-- Event Image -->
+                        <div class="position-relative">
+                            <?php if (!empty($eventItem['cover_image'])): ?>
+                                <img src="<?= htmlspecialchars($eventItem['cover_image']) ?>" 
+                                     class="card-img-top" 
+                                     alt="<?= htmlspecialchars($eventItem['title']) ?>"
+                                     style="height: 120px; object-fit: cover;">
+                            <?php else: ?>
+                                <div class="card-img-top bg-gradient-primary d-flex align-items-center justify-content-center" 
+                                     style="height: 120px;">
+                                    <i class="fas fa-calendar-alt fa-lg text-white opacity-50"></i>
+                                </div>
+                            <?php endif; ?>
+                            
                             <!-- Event Date Badge -->
-                            <div class="d-flex align-items-start mb-3">
-                                <div class="event-date-badge text-center p-2 bg-primary text-white rounded me-3 flex-shrink-0">
-                                    <div class="small"><?= date('M', strtotime($eventItem['event_date'])) ?></div>
-                                    <div class="fw-bold"><?= date('d', strtotime($eventItem['event_date'])) ?></div>
+                            <div class="position-absolute top-0 start-0 m-2">
+                                <div class="event-date-badge text-center px-1 py-1 bg-white shadow-sm rounded">
+                                    <div class="small text-primary fw-bold" style="font-size: 0.65rem;"><?= strtoupper(date('M', strtotime($eventItem['event_date']))) ?></div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.8rem;"><?= date('d', strtotime($eventItem['event_date'])) ?></div>
                                 </div>
-                                <div class="flex-grow-1">
-                                    <h5 class="card-title mb-1">
-                                        <a href="/event-detail.php?slug=<?= htmlspecialchars($eventItem['slug']) ?>" 
-                                           class="text-decoration-none">
-                                            <?= htmlspecialchars($eventItem['title']) ?>
-                                        </a>
-                                    </h5>
-                                    <p class="text-muted small mb-1">
-                                        by <strong><?= htmlspecialchars($eventItem['group_name']) ?></strong>
-                                    </p>
-                                </div>
+                            </div>
+                            
+                            <!-- Event Type Badge -->
+                            <div class="position-absolute top-0 end-0 m-2">
+                                <?php if ($eventItem['location_type'] === 'online'): ?>
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-laptop me-1"></i>Online
+                                    </span>
+                                <?php elseif ($eventItem['location_type'] === 'hybrid'): ?>
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-globe me-1"></i>Hybrid
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-map-marker-alt me-1"></i>In Person
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column p-2">
+                            <!-- Event Title & Group -->
+                            <div class="mb-2">
+                                <h6 class="card-title mb-1 small">
+                                    <a href="/event-detail.php?slug=<?= htmlspecialchars($eventItem['slug']) ?>" 
+                                       class="text-decoration-none text-dark">
+                                        <?= htmlspecialchars($eventItem['title']) ?>
+                                    </a>
+                                </h6>
+                                <p class="text-muted mb-0" style="font-size: 0.75rem;">
+                                    <i class="fas fa-users me-1"></i>
+                                    by <strong><?= htmlspecialchars($eventItem['group_name']) ?></strong>
+                                </p>
                             </div>
 
                             <!-- Event Description -->
                             <?php if ($eventItem['description']): ?>
-                                <p class="card-text text-muted mb-3">
-                                    <?= htmlspecialchars(substr($eventItem['description'], 0, 120)) ?>
-                                    <?= strlen($eventItem['description']) > 120 ? '...' : '' ?>
+                                <p class="card-text text-muted mb-2 flex-grow-1 small">
+                                    <?= htmlspecialchars(substr($eventItem['description'], 0, 80)) ?>
+                                    <?= strlen($eventItem['description']) > 80 ? '...' : '' ?>
                                 </p>
                             <?php endif; ?>
 
                             <!-- Event Details -->
-                            <div class="small text-muted mb-3">
+                            <div class="small text-muted mb-2">
                                 <div class="d-flex align-items-center mb-1">
-                                    <i class="fas fa-clock me-2"></i>
-                                    <?= date('l, M j, Y • g:i A', strtotime($eventItem['event_date'] . ' ' . $eventItem['start_time'])) ?>
+                                    <i class="fas fa-clock me-2 text-primary"></i>
+                                    <span><?= date('M j, Y', strtotime($eventItem['event_date'])) ?></span>
                                 </div>
-                                
                                 <div class="d-flex align-items-center mb-1">
-                                    <i class="fas fa-map-marker-alt me-2"></i>
-                                    <?php if ($eventItem['location_type'] === 'online'): ?>
-                                        <span class="badge bg-info me-1">Online</span>
-                                    <?php elseif ($eventItem['location_type'] === 'hybrid'): ?>
-                                        <span class="badge bg-warning me-1">Hybrid</span>
-                                        <?= htmlspecialchars($eventItem['venue_name']) ?>
-                                    <?php else: ?>
-                                        <span class="badge bg-success me-1">In Person</span>
-                                        <?= htmlspecialchars($eventItem['venue_name']) ?>
+                                    <i class="fas fa-clock me-2 text-primary"></i>
+                                    <span><?= date('g:i A', strtotime($eventItem['start_time'])) ?></span>
+                                    <?php if ($eventItem['end_time']): ?>
+                                        - <?= date('g:i A', strtotime($eventItem['end_time'])) ?>
                                     <?php endif; ?>
                                 </div>
-                                
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-users me-2"></i>
-                                    <?= $eventItem['attendee_count'] ?> going
-                                    <?php if ($eventItem['price'] > 0): ?>
-                                        <span class="ms-2">• $<?= number_format($eventItem['price'], 2) ?></span>
-                                    <?php else: ?>
-                                        <span class="ms-2 text-success">• Free</span>
-                                    <?php endif; ?>
-                                </div>
+                                <?php if ($eventItem['location_type'] !== 'online'): ?>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                                        <span><?= htmlspecialchars($eventItem['venue_name'] ?: $eventItem['location']) ?></span>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Event Meta -->
+                            <div class="d-flex align-items-center justify-content-between text-muted mb-2" style="font-size: 0.7rem;">
+                                <span>
+                                    <i class="fas fa-users me-1"></i>
+                                    <?= $eventItem['attendee_count'] ?? 0 ?> attending
+                                </span>
+                                <?php if ($eventItem['price'] > 0): ?>
+                                    <span class="text-primary fw-bold">$<?= number_format($eventItem['price'], 2) ?></span>
+                                <?php else: ?>
+                                    <span class="text-success fw-bold">Free</span>
+                                <?php endif; ?>
                             </div>
 
                             <!-- Action Buttons -->
                             <div class="mt-auto">
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex gap-1">
                                     <a href="/event-detail.php?slug=<?= htmlspecialchars($eventItem['slug']) ?>" 
-                                       class="btn btn-primary btn-sm">
-                                        <i class="fas fa-eye"></i> View Details
+                                       class="btn btn-primary btn-xs flex-fill" style="font-size: 0.7rem;">
+                                        <i class="fas fa-eye me-1"></i> View
                                     </a>
                                     
                                     <a href="/group-detail.php?slug=<?= htmlspecialchars($eventItem['group_slug']) ?>" 
-                                       class="btn btn-outline-secondary btn-sm">
-                                        <i class="fas fa-users"></i> View Group
+                                       class="btn btn-outline-secondary btn-xs" style="font-size: 0.7rem;">
+                                        <i class="fas fa-users"></i>
                                     </a>
                                 </div>
                             </div>
@@ -255,16 +297,64 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
 
 <style>
 .event-card {
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .event-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: rgba(0,0,0,0.12);
 }
 
 .event-date-badge {
-    min-width: 50px;
+    min-width: 32px;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.card-img-top {
+    transition: transform 0.3s ease;
+}
+
+.event-card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--bs-primary) 0%, #6f42c1 100%);
+}
+
+.badge {
+    font-size: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-sm {
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.event-card .card-title a:hover {
+    color: var(--bs-primary) !important;
+}
+
+/* Enhanced responsive design */
+@media (max-width: 768px) {
+    .event-card {
+        margin-bottom: 1rem;
+    }
+    
+    .event-date-badge {
+        min-width: 28px;
+        font-size: 0.7rem;
+    }
+    
+    .card-img-top, 
+    .bg-gradient-primary {
+        height: 100px !important;
+    }
 }
 </style>
 

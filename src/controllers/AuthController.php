@@ -53,6 +53,7 @@ class AuthController {
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['user_role'] = $user['role'];
+                $_SESSION['last_activity'] = time(); // Set initial activity timestamp
                 
                 setFlashMessage('success', 'Welcome back, ' . explode(' ', $user['name'])[0] . '!');
                 redirect(BASE_URL . '/dashboard.php');
@@ -94,7 +95,7 @@ class AuthController {
             'city' => sanitize($_POST['city'] ?? ''),
             'interests' => sanitize($_POST['interests'] ?? ''),
             'bio' => sanitize($_POST['bio'] ?? ''),
-            'role' => isset($_POST['is_organizer']) ? 'organizer' : 'member',
+            'role' => 'member', // All new registrations are members
             'csrf_token' => $_POST['csrf_token'] ?? ''
         ];
         
@@ -122,6 +123,7 @@ class AuthController {
             $_SESSION['user_name'] = $data['name'];
             $_SESSION['user_email'] = $data['email'];
             $_SESSION['user_role'] = $data['role'];
+            $_SESSION['last_activity'] = time(); // Set initial activity timestamp
             
             setFlashMessage('success', 'Registration successful! Welcome to ConnectHub.');
             redirect(BASE_URL . '/dashboard.php');

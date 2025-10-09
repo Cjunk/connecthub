@@ -115,8 +115,23 @@ class User {
             return true;
         }
         
-        return $user['membership_expires'] && 
-               new DateTime() < new DateTime($user['membership_expires']);
+        // Check for membership_expires field (PostgreSQL style) or membership_expires_at (MySQL style)
+        $membershipField = null;
+        if (!empty($user['membership_expires'])) {
+            $membershipField = 'membership_expires';
+        } elseif (!empty($user['membership_expires_at'])) {
+            $membershipField = 'membership_expires_at';
+        }
+        
+        if (!$membershipField) {
+            return false; // No membership expiration date set
+        }
+        
+        try {
+            return new DateTime() < new DateTime($user[$membershipField]);
+        } catch (Exception $e) {
+            return false; // Invalid date format
+        }
     }
     
     private function updateLastLogin($userId) {

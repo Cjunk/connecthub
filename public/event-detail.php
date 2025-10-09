@@ -31,8 +31,14 @@ if (!$eventData) {
 
 // Get user's RSVP status if logged in
 $userRsvp = null;
+$userHasMembership = false;
 if (isset($_SESSION['user_id'])) {
     $userRsvp = $event->getUserRSVP($eventData['id'], $_SESSION['user_id']);
+    
+    // Check if user has active membership
+    require_once '../src/models/User.php';
+    $userModel = new User();
+    $userHasMembership = $userModel->hasMembership($_SESSION['user_id']);
 }
 
 // Handle RSVP submission
@@ -40,6 +46,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (!isset($_SESSION['user_id'])) {
         $_SESSION['error'] = "Please log in to RSVP to events.";
         header('Location: /login.php');
+        exit;
+    }
+    
+    // Check if user has active membership
+    require_once '../src/models/User.php';
+    $userModel = new User();
+    if (!$userModel->hasMembership($_SESSION['user_id'])) {
+        $_SESSION['error'] = "Membership required to RSVP to events. Please upgrade to continue.";
+        header('Location: /membership.php');
         exit;
     }
     
@@ -79,10 +94,19 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
     <div class="row">
         <div class="col-12">
             <div class="d-flex align-items-center mb-4">
-                <a href="/group-detail.php?slug=<?= htmlspecialchars($eventData['group_slug']) ?>" 
-                   class="btn btn-outline-secondary me-3">
-                    <i class="fas fa-arrow-left"></i> Back to Group
-                </a>
+                <?php 
+                $from = $_GET['from'] ?? 'group';
+                if ($from === 'dashboard'): ?>
+                    <a href="<?= BASE_URL ?>/dashboard.php" 
+                       class="btn btn-outline-secondary me-3">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                <?php else: ?>
+                    <a href="<?= BASE_URL ?>/group-detail.php?slug=<?= htmlspecialchars($eventData['group_slug']) ?>" 
+                       class="btn btn-outline-secondary me-3">
+                        <i class="fas fa-arrow-left"></i> Back to Group
+                    </a>
+                <?php endif; ?>
                 <div class="flex-grow-1">
                     <h1 class="mb-1"><?= htmlspecialchars($eventData['title']) ?></h1>
                     <p class="text-muted mb-0">
@@ -261,6 +285,16 @@ require_once __DIR__ . '/../src/views/layouts/header.php';
                             <p class="text-muted">Please log in to RSVP to this event.</p>
                             <a href="/login.php" class="btn btn-primary w-100">
                                 <i class="fas fa-sign-in-alt"></i> Log In to RSVP
+                            </a>
+                        <?php elseif (!$userHasMembership): ?>
+                            <h5 class="card-title">Membership Required</h5>
+                            <div class="alert-warning mb-3">
+                                <i class="fas fa-crown me-2"></i>
+                                <strong>Premium Feature</strong><br>
+                                <small>RSVP to events requires an active membership.</small>
+                            </div>
+                            <a href="/membership.php" class="btn btn-warning w-100">
+                                <i class="fas fa-star me-2"></i>Get Membership - $100/year
                             </a>
                         <?php else: ?>
                             <h5 class="card-title">Your RSVP</h5>

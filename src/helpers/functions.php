@@ -49,15 +49,55 @@ function redirect($url) {
 }
 
 /**
- * Check if user is logged in
+ * Check if user is logged in and session is valid
  */
 function isLoggedIn() {
-    return isset($_SESSION['user_id']);
+    // Check if user_id is set
+    if (!isset($_SESSION['user_id'])) {
+        return false;
+    }
+    
+    // Check session timeout (2 hours = 7200 seconds)
+    $timeout = 7200;
+    
+    // Check if last activity is set
+    if (isset($_SESSION['last_activity'])) {
+        // If more than timeout seconds have passed since last activity
+        if (time() - $_SESSION['last_activity'] > $timeout) {
+            // Session has expired
+            session_unset();
+            session_destroy();
+            return false;
+        }
+    }
+    
+    // Update last activity time
+    $_SESSION['last_activity'] = time();
+    
+    return true;
 }
 
 /**
- * Get current user ID
+ * Get remaining session time in seconds
  */
+function getSessionTimeRemaining() {
+    if (!isset($_SESSION['last_activity'])) {
+        return 0;
+    }
+    
+    $timeout = 7200; // 2 hours
+    $elapsed = time() - $_SESSION['last_activity'];
+    $remaining = $timeout - $elapsed;
+    
+    return max(0, $remaining);
+}
+
+/**
+ * Check if session is expiring soon (within 5 minutes)
+ */
+function isSessionExpiringSoon() {
+    return getSessionTimeRemaining() <= 300; // 5 minutes
+}
 function getCurrentUserId() {
     return $_SESSION['user_id'] ?? null;
 }
@@ -228,19 +268,13 @@ function hasValidMembership($user = null) {
         return false;
     }
     
-    // Admins and super admins bypass membership requirements
-    if (in_array($user['role'], ['admin', 'super_admin'])) {
-        return true;
+    // Use the User model's hasMembership method for consistency
+    try {
+        $userModel = new User();
+        return $userModel->hasMembership($user['id']);
+    } catch (Exception $e) {
+        return false;
     }
-    
-    // Check if user has membership_expires date and it's still valid
-    if (!empty($user['membership_expires'])) {
-        $expiryDate = new DateTime($user['membership_expires']);
-        $currentDate = new DateTime();
-        return $expiryDate >= $currentDate;
-    }
-    
-    return false;
 }
 
 /**

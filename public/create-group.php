@@ -44,6 +44,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $website_url = trim($_POST['website_url'] ?? '');
     $rules = trim($_POST['rules'] ?? '');
     
+    // Handle image upload
+    $cover_image = null;
+    if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = '../public/uploads/groups/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        
+        $fileType = $_FILES['cover_image']['type'];
+        $fileSize = $_FILES['cover_image']['size'];
+        
+        if (!in_array($fileType, $allowedTypes)) {
+            $errors[] = 'Cover image must be JPEG, PNG, or WebP format.';
+        } elseif ($fileSize > $maxSize) {
+            $errors[] = 'Cover image must be less than 5MB.';
+        } else {
+            $extension = pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION);
+            $filename = uniqid('group_') . '.' . $extension;
+            $uploadPath = $uploadDir . $filename;
+            
+            if (move_uploaded_file($_FILES['cover_image']['tmp_name'], $uploadPath)) {
+                $cover_image = 'uploads/groups/' . $filename;
+            } else {
+                $errors[] = 'Failed to upload cover image.';
+            }
+        }
+    }
+    
     // Validation
     if (empty($name)) {
         $errors[] = 'Group name is required.';
@@ -85,7 +116,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'meeting_frequency' => $meeting_frequency,
             'website_url' => $website_url,
             'rules' => $rules,
-            'created_by' => $currentUser['id']
+            'created_by' => $currentUser['id'],
+            'cover_image' => $cover_image
         ];
         
         $groupId = $groupModel->create($groupData);
@@ -136,7 +168,39 @@ $pageTitle = 'Create Group';
                         </div>
                     <?php endif; ?>
 
-                    <form method="POST">
+                    <form method="POST" enctype="multipart/form-data">
+                        <!-- Cover Image Upload -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-image text-primary me-2"></i>Group Image
+                                </h5>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="cover_image" class="form-label">Cover Image (Optional)</label>
+                                <input type="file" class="form-control" id="cover_image" name="cover_image" 
+                                       accept="image/jpeg,image/png,image/webp">
+                                <div class="form-text">
+                                    Upload a cover image for your group. JPEG, PNG, or WebP format. Maximum 5MB.
+                                    <br><small class="text-muted">Recommended size: 800x400 pixels for best display.</small>
+                                </div>
+                                
+                                <!-- Image Preview -->
+                                <div id="imagePreview" class="mt-3" style="display: none;">
+                                    <div class="card" style="max-width: 300px;">
+                                        <img id="previewImg" src="" class="card-img-top" alt="Preview" style="height: 150px; object-fit: cover;">
+                                        <div class="card-body p-2">
+                                            <small class="text-muted">Preview</small>
+                                            <button type="button" class="btn btn-sm btn-outline-danger float-end" onclick="removePreview()">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Basic Information -->
                         <div class="row mb-4">
                             <div class="col-12">
@@ -286,5 +350,48 @@ $pageTitle = 'Create Group';
         </div>
     </div>
 </div>
+
+<script>
+// Image preview functionality
+document.getElementById('cover_image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    
+    if (file) {
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please select a JPEG, PNG, or WebP image.');
+            e.target.value = '';
+            preview.style.display = 'none';
+            return;
+        }
+        
+        // Check file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image must be less than 5MB.');
+            e.target.value = '';
+            preview.style.display = 'none';
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+    }
+});
+
+function removePreview() {
+    document.getElementById('cover_image').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+}
+</script>
 
 <?php include '../src/views/layouts/footer.php'; ?>
