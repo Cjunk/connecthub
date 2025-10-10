@@ -39,22 +39,15 @@ $pageTitle = 'Browse Groups';
 <?php include '../src/views/layouts/header.php'; ?>
 
 <div class="container">
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h1 class="h2 mb-2">
-                <i class="fas fa-users me-2 text-primary"></i>Browse Groups
-            </h1>
-            <p class="text-muted">Connect with like-minded people in your community</p>
-        </div>
-        <div class="col-md-4 text-end">
-            <?php if (isOrganizer() && $hasValidMembership): ?>
-                <a href="<?php echo BASE_URL; ?>/create-group.php" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Create Group
-                </a>
-            <?php endif; ?>
-        </div>
-    </div>
+    <?php
+    $title = "Browse Groups";
+    $subtitle = "Connect with like-minded people in your community";
+    $icon = "fas fa-users";
+    $buttonText = $hasValidMembership ? '<i class="fas fa-plus me-2"></i>Browse Events' : '';
+    $buttonLink = "/events.php";
+    $buttonClass = "btn btn-primary";
+    include '../src/views/components/page-header.php';
+    ?>
 
     <!-- Membership Alert -->
     <?php if (!$hasValidMembership): ?>

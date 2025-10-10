@@ -26,7 +26,6 @@ if (empty($visibleEvents)) {
     if (method_exists($eventModel, 'getUpcomingPublic')) {
         $visibleEvents = $eventModel->getUpcomingPublic(5);
     } elseif (method_exists($eventModel, 'getUpcoming')) {
-        // Assumes this returns only published/public events
         $visibleEvents = $eventModel->getUpcoming(5);
     } else {
         $visibleEvents = [];
@@ -38,12 +37,12 @@ $needsOnboarding  = empty($userGroups) && !$hasMembership;
 
 // === HERO PHOTOS (placeholders for now; swap with your own later) ===
 $heroPhotos = [
-    'https://picsum.photos/seed/blue-mountains/1200/800',
-    'https://picsum.photos/seed/katoomba/1200/800',
-    'https://picsum.photos/seed/three-sisters/1200/800',
-    'https://picsum.photos/seed/wentworth-falls/1200/800',
-    'https://picsum.photos/seed/grose-valley/1200/800',
-    'https://picsum.photos/seed/megalong/1200/800',
+    'https://picsum.photos/seed/blue-mountains/1600/1066',
+    'https://picsum.photos/seed/katoomba/1600/1066',
+    'https://picsum.photos/seed/three-sisters/1600/1066',
+    'https://picsum.photos/seed/wentworth-falls/1600/1066',
+    'https://picsum.photos/seed/grose-valley/1600/1066',
+    'https://picsum.photos/seed/megalong/1600/1066',
 ];
 
 // === HELPERS ===
@@ -86,8 +85,10 @@ include '../src/views/layouts/header.php';
 
         <div class="photo-pile">
           <?php foreach ($heroPhotos as $i => $src): ?>
-            <a href="<?= htmlspecialchars($src) ?>" target="_blank" rel="noopener"
-               class="polaroid p<?= $i+1 ?>" aria-label="Open photo <?= $i+1 ?>">
+            <a href="<?= htmlspecialchars($src) ?>"
+               class="polaroid p<?= $i+1 ?>"
+               data-index="<?= $i ?>"
+               aria-label="Open photo <?= $i+1 ?>">
               <img src="<?= htmlspecialchars($src) ?>"
                    alt="Scenic photo <?= $i+1 ?>"
                    loading="lazy" decoding="async">
@@ -183,7 +184,7 @@ include '../src/views/layouts/header.php';
                         <a href="<?= BASE_URL; ?>/groups.php" class="btn btn-sm btn-outline-secondary"><i class="fas fa-users me-1"></i>Browse Groups</a>
                     <?php endif; ?>
 
-                    <?php if (isOrganizer() && $hasMembership): ?>
+                    <?php if ($hasMembership): ?>
                         <a href="<?= BASE_URL; ?>/create-group.php" class="btn btn-sm btn-success"><i class="fas fa-plus me-1"></i>Create Group</a>
                     <?php endif; ?>
 
@@ -302,6 +303,18 @@ include '../src/views/layouts/header.php';
     </div>
 </div>
 
+<!-- ===== PURE JS LIGHTBOX (no Bootstrap dependency) ===== -->
+<div id="ch-lightbox" class="ch-lightbox ch-hidden" aria-hidden="true" role="dialog" aria-modal="true">
+  <button class="ch-close" aria-label="Close">&times;</button>
+  <button class="ch-nav ch-prev" aria-label="Previous">&#10094;</button>
+  <img class="ch-img" alt="Photo">
+  <div class="ch-meta">
+    <span class="ch-caption">Photo</span>
+    <span class="ch-count">1 / 1</span>
+  </div>
+  <button class="ch-nav ch-next" aria-label="Next">&#10095;</button>
+</div>
+
 <style>
 /* --- Photo pile styling --- */
 .photo-pile{
@@ -322,6 +335,7 @@ include '../src/views/layouts/header.php';
   transform-origin:center center;
   transition:transform .18s ease, box-shadow .18s ease;
   text-decoration:none;
+  cursor: zoom-in;
 }
 .polaroid img{
   width:100%; height:100%;
@@ -334,14 +348,14 @@ include '../src/views/layouts/header.php';
   font-size:.8rem; color:#555;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-/* “Pile” look via slight rotations/offsets */
+/* “Pile” rotations */
 .polaroid.p1{ transform:rotate(-5deg) translateY(4px); }
 .polaroid.p2{ transform:rotate(3deg) translateY(-6px); }
 .polaroid.p3{ transform:rotate(-2deg) translateY(2px); }
 .polaroid.p4{ transform:rotate(6deg) translateY(-4px); }
 .polaroid.p5{ transform:rotate(-4deg) translateY(3px); }
 .polaroid.p6{ transform:rotate(2deg) translateY(-5px); }
-/* Hover brings card to focus */
+/* Hover focus */
 @media (hover:hover){
   .polaroid:hover{
     transform:rotate(0) scale(1.03);
@@ -356,6 +370,148 @@ include '../src/views/layouts/header.php';
 @media (min-width: 1200px){
   .polaroid{ width: 200px; }
 }
+
+/* --- Pure JS Lightbox --- */
+.ch-lightbox{
+  position:fixed; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.92);
+  z-index: 20000;
+  user-select:none;
+}
+.ch-hidden{ display:none; }
+.ch-img{
+  max-width: 96vw;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.6);
+}
+.ch-meta{
+  position:absolute; left:0; right:0; bottom:16px;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:0 16px;
+  color:#ddd; font-size:.9rem;
+  pointer-events:none;
+}
+.ch-close{
+  position:absolute; right:14px;
+  font-size:32px; line-height:1; color:#fff;
+  background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3);
+  border-radius:50%; cursor:pointer;
+  padding:8px 10px;
+  text-shadow:0 2px 12px rgba(0,0,0,.7);
+  z-index:2;
+  transition: all 0.2s ease;
+}
+.ch-close:hover{
+  background:rgba(0,0,0,0.7); border-color:rgba(255,255,255,0.5);
+  transform:scale(1.1);
+}
+.ch-nav{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:44px; height:44px; border-radius:50%;
+  background:#fff; color:#000; border:0; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 6px 18px rgba(0,0,0,.45);
+  opacity:.9; z-index:2;
+}
+.ch-prev{ left:14px; }
+.ch-next{ right:14px; }
+.ch-nav:hover{ opacity:1; }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const photos   = <?= json_encode($heroPhotos, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+  const thumbs   = Array.from(document.querySelectorAll('.photo-pile a.polaroid'));
+  const captions = Array.from(document.querySelectorAll('.photo-pile .caption')).map(c => c.textContent.trim() || 'Photo');
+
+  // Lightbox elements
+  const lb        = document.getElementById('ch-lightbox');
+  const lbImg     = lb.querySelector('.ch-img');
+  const lbClose   = lb.querySelector('.ch-close');
+  const lbPrev    = lb.querySelector('.ch-prev');
+  const lbNext    = lb.querySelector('.ch-next');
+  const lbCap     = lb.querySelector('.ch-caption');
+  const lbCount   = lb.querySelector('.ch-count');
+
+  let idx = 0, open = false, touchStartX = 0;
+
+  // Dynamic close button positioning to account for navbar height
+  function positionCloseButton() {
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+      const navbarHeight = navbar.offsetHeight;
+      lbClose.style.top = (navbarHeight + 10) + 'px'; // 10px padding below navbar
+    }
+  }
+
+  function setImg(i){
+    idx = (i + photos.length) % photos.length;
+    lbImg.src = photos[idx];
+    lbImg.alt = captions[idx] || 'Photo';
+    lbCap.textContent = captions[idx] || 'Photo';
+    lbCount.textContent = (idx+1) + ' / ' + photos.length;
+  }
+
+  function show(i){
+    setImg(i);
+    positionCloseButton(); // Position button before showing
+    lb.classList.remove('ch-hidden');
+    document.body.style.overflow = 'hidden';
+    open = true;
+  }
+  function hide(){
+    lb.classList.add('ch-hidden');
+    document.body.style.overflow = '';
+    lbImg.removeAttribute('src');
+    open = false;
+  }
+
+  // Position button on window resize in case navbar height changes
+  window.addEventListener('resize', () => {
+    if (open) positionCloseButton();
+  });
+
+  // Open on thumbnail click
+  thumbs.forEach((a, i) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      show(i);
+    });
+  });
+
+  // Controls
+  lbClose.addEventListener('click', hide);
+  lbPrev.addEventListener('click', () => setImg(idx-1));
+  lbNext.addEventListener('click', () => setImg(idx+1));
+
+  // Click outside image to close
+  lb.addEventListener('click', (e) => {
+    if (e.target === lb) hide();
+  });
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (!open) return;
+    if (e.key === 'Escape') hide();
+    if (e.key === 'ArrowLeft') setImg(idx-1);
+    if (e.key === 'ArrowRight') setImg(idx+1);
+  });
+
+  // Basic swipe (mobile)
+  lb.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, {passive:true});
+  lb.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) (dx > 0 ? setImg(idx-1) : setImg(idx+1));
+  }, {passive:true});
+
+  // Preload next/prev for snappier nav
+  function preload(src){ const i = new Image(); i.src = src; }
+  lbNext.addEventListener('click', () => preload(photos[(idx+1)%photos.length]));
+  lbPrev.addEventListener('click', () => preload(photos[(idx-1+photos.length)%photos.length]));
+});
+</script>
 
 <?php include '../src/views/layouts/footer.php'; ?>

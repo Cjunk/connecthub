@@ -45,14 +45,17 @@ class EventComment {
                     u.name as author_name,
                     u.email as author_email,
                     u.role as author_role,
-                    COUNT(cl.id) as likes_count,
+                    COALESCE(likes.like_count, 0) as likes_count,
                     CASE WHEN cl_user.id IS NOT NULL THEN true ELSE false END as user_liked
                 FROM event_comments ec
                 JOIN users u ON ec.user_id = u.id
-                LEFT JOIN comment_likes cl ON ec.id = cl.comment_id
+                LEFT JOIN (
+                    SELECT comment_id, COUNT(*) as like_count
+                    FROM comment_likes
+                    GROUP BY comment_id
+                ) likes ON ec.id = likes.comment_id
                 LEFT JOIN comment_likes cl_user ON ec.id = cl_user.comment_id AND cl_user.user_id = :user_id
                 WHERE ec.event_id = :event_id {$statusFilter}
-                GROUP BY ec.id, u.name, u.email, u.role, cl_user.id
                 ORDER BY ec.created_at ASC";
 
         $comments = $this->db->fetchAll($sql, [

@@ -294,7 +294,7 @@ class CommentController {
 
         ob_start();
         ?>
-        <form id="<?= $formId ?>" class="comment-form mb-3" method="POST">
+        <form id="<?= $formId ?>" class="comment-form mb-2" method="POST">
             <input type="hidden" name="event_id" value="<?= $eventId ?>">
             <?php if ($parentId): ?>
                 <input type="hidden" name="parent_id" value="<?= $parentId ?>">
@@ -302,11 +302,17 @@ class CommentController {
 
             <div class="d-flex">
                 <div class="flex-grow-1 me-2">
-                    <textarea name="comment" class="form-control" rows="2"
+                    <textarea name="comment" class="form-control form-control-sm" rows="2"
                               placeholder="<?= $placeholder ?>" maxlength="1000" required></textarea>
                 </div>
-                <div>
-                    <button type="submit" class="btn btn-primary">
+                <div class="d-flex align-items-end">
+                    <?php if ($parentId): ?>
+                        <button type="button" class="btn btn-sm btn-outline-secondary me-2 cancel-reply">
+                            <i class="fas fa-times"></i>
+                            <span class="d-none d-sm-inline ms-1">Cancel</span>
+                        </button>
+                    <?php endif; ?>
+                    <button type="submit" class="btn btn-sm btn-primary">
                         <i class="fas fa-paper-plane"></i>
                         <span class="d-none d-sm-inline ms-1"><?= $submitText ?></span>
                     </button>
@@ -328,16 +334,16 @@ class CommentController {
 
         ob_start();
         ?>
-        <div class="comments-section mt-4" data-event-id="<?= $eventId ?>">
-            <h5 class="mb-3">
+        <div class="comments-section mt-3" data-event-id="<?= $eventId ?>">
+            <h5 class="mb-2">
                 <i class="fas fa-comments text-primary"></i>
                 Discussion (<?= $commentCount ?>)
             </h5>
 
             <?php if ($canComment): ?>
                 <!-- Comment Form -->
-                <div class="card mb-4">
-                    <div class="card-body">
+                <div class="card mb-3">
+                    <div class="card-body py-2">
                         <?= $this->renderCommentForm($eventId) ?>
                     </div>
                 </div>
@@ -380,37 +386,37 @@ class CommentController {
             $isReply = $level > 0;
             $canManage = $this->commentModel->canManageComment($comment['id'], $_SESSION['user_id'] ?? null);
             ?>
-            <div class="comment <?= $isReply ? 'reply ms-4' : 'mb-3' ?>" data-comment-id="<?= $comment['id'] ?>">
-                <div class="card">
-                    <div class="card-body">
+            <div class="comment <?= $isReply ? 'reply ms-5 border-start border-secondary border-3' : 'mb-2' ?>" data-comment-id="<?= $comment['id'] ?>" style="<?= $isReply ? 'background-color: #f8f9fa; border-left-color: #6c757d !important;' : '' ?>">
+                <div class="card border-0 bg-transparent">
+                    <div class="card-body py-1">
                         <div class="d-flex align-items-start">
                             <!-- Avatar -->
-                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
-                                 style="width:40px;height:40px;font-size:16px;">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                 style="width:28px;height:28px;font-size:12px;">
                                 <?= strtoupper(substr($comment['author_name'], 0, 1)) ?>
                             </div>
 
                             <div class="flex-grow-1">
                                 <!-- Author and timestamp -->
-                                <div class="d-flex align-items-center mb-2">
-                                    <strong class="me-2"><?= htmlspecialchars($comment['author_name']) ?></strong>
+                                <div class="d-flex align-items-center mb-1">
+                                    <strong class="me-2" style="font-size: 0.9rem;"><?= htmlspecialchars($comment['author_name']) ?></strong>
                                     <?php if ($comment['author_role'] === 'organizer'): ?>
-                                        <span class="badge bg-success">Organizer</span>
+                                        <span class="badge bg-success" style="font-size: 0.75rem;">Organizer</span>
                                     <?php endif; ?>
-                                    <small class="text-muted ms-auto">
+                                    <small class="text-muted ms-auto" style="font-size: 0.8rem;">
                                         <?= date('M j, Y g:i A', strtotime($comment['created_at'])) ?>
                                     </small>
                                 </div>
 
                                 <!-- Comment content -->
-                                <div class="comment-content mb-2">
+                                <div class="comment-content mb-1" style="font-size: 0.9rem; line-height: 1.4;">
                                     <?= nl2br(htmlspecialchars($comment['comment'])) ?>
                                 </div>
 
                                 <!-- Actions -->
                                 <div class="d-flex align-items-center">
                                     <!-- Like button -->
-                                    <button class="btn btn-sm btn-link like-btn p-0 me-3 <?= $comment['user_liked'] ? 'text-primary' : 'text-muted' ?>"
+                                    <button class="btn btn-sm btn-link like-btn p-0 me-2 <?= $comment['user_liked'] ? 'text-primary' : 'text-muted' ?>" style="font-size: 0.8rem;"
                                             data-comment-id="<?= $comment['id'] ?>">
                                         <i class="fas fa-thumbs-up me-1"></i>
                                         <span class="likes-count"><?= $comment['likes_count'] ?? 0 ?></span>
@@ -418,7 +424,7 @@ class CommentController {
 
                                     <!-- Reply button -->
                                     <?php if ($canComment && !$isReply): ?>
-                                        <button class="btn btn-sm btn-link text-muted reply-btn p-0 me-3"
+                                        <button class="btn btn-sm btn-link text-muted reply-btn p-0 me-2" style="font-size: 0.8rem;"
                                                 data-comment-id="<?= $comment['id'] ?>">
                                             <i class="fas fa-reply me-1"></i> Reply
                                         </button>
@@ -426,7 +432,7 @@ class CommentController {
 
                                     <!-- Manage button -->
                                     <?php if ($canManage): ?>
-                                        <button class="btn btn-sm btn-link text-danger delete-comment ms-2"
+                                        <button class="btn btn-sm btn-link text-danger delete-comment ms-1" style="font-size: 0.8rem;"
                                                 data-comment-id="<?= $comment['id'] ?>">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -435,7 +441,7 @@ class CommentController {
 
                                 <!-- Reply form (hidden by default) -->
                                 <?php if ($canComment && !$isReply): ?>
-                                    <div class="reply-form mt-3" style="display:none;">
+                                    <div class="reply-form mt-2" data-comment-id="<?= $comment['id'] ?>" style="display:none;">
                                         <?= $this->renderCommentForm($comment['event_id'], $comment['id']) ?>
                                     </div>
                                 <?php endif; ?>
@@ -446,7 +452,7 @@ class CommentController {
 
                 <!-- Render replies -->
                 <?php if (!empty($comment['replies'])): ?>
-                    <div class="replies mt-2">
+                    <div class="replies mt-1">
                         <?= $this->renderCommentsList($comment['replies'], $canComment, $level + 1) ?>
                     </div>
                 <?php endif; ?>
