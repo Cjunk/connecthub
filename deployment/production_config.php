@@ -15,15 +15,15 @@ define('APP_ENV', 'production');
 define('APP_DEBUG', false); // NEVER set to true in production
 
 // URL Settings - UPDATE WITH YOUR DOMAIN
-define('BASE_URL', 'https://phat-fitness.com/connecthub/public'); // Your actual current URL
-define('SITE_URL', 'https://phat-fitness.com/connecthub'); // Your actual current site URL
+define('BASE_URL', 'https://yourwebsite.com'); // Replace with your actual domain URL
+define('SITE_URL', 'https://yourwebsite.com'); // Replace with your actual site URL
 
 // Email Configuration - UPDATE WITH YOUR EMAIL SETTINGS
 define('SMTP_HOST', 'relay-hosting.secureserver.net'); // GoDaddy SMTP
 define('SMTP_PORT', 25); // GoDaddy SMTP port (or 587 for TLS)
 define('SMTP_USERNAME', 'your-email@yourdomain.com');
 define('SMTP_PASSWORD', 'your-email-password');
-define('FROM_EMAIL', 'noreply@yourdomain.com');
+define('FROM_EMAIL', 'noreply@yourwebsite.com');
 
 // Payment Configuration - UPDATE WITH YOUR STRIPE LIVE KEYS
 define('STRIPE_PUBLIC_KEY', 'pk_live_your_stripe_public_key');
