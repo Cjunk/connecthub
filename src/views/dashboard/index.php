@@ -205,5 +205,6 @@
 window.dashboardHeroPhotos = <?= json_encode(array_slice($heroPhotos, 0, 4), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 </script>
 <script src="<?= BASE_URL; ?>/assets/js/dashboard.js"></script>
+<script src="<?= BASE_URL; ?>/assets/js/dashboard-feed.js"></script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>
