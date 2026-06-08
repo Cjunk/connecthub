@@ -1,7 +1,10 @@
 <?php
-require_once '../config/constants.php';
-require_once '../config/bootstrap.php';
-require_once '../src/controllers/AuthController.php';
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../config/bootstrap.php';
 
-$authController = new AuthController();
-$authController->register();
+// Backward-compatible endpoint: keep POST support for old forms/bookmarks.
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+	redirect(BASE_URL . '/register.php');
+}
+
+require_once __DIR__ . '/../register.php';

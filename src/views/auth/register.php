@@ -17,7 +17,7 @@ $pageTitle = 'Register';
                         <p class="text-muted small mb-0">Create your account and start connecting</p>
                     </div>
                     
-                    <form method="POST" action="<?php echo BASE_URL; ?>/auth/register.php">
+                    <form method="POST" action="<?php echo BASE_URL; ?>/register.php">
                         <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         
                         <div class="mb-2">
