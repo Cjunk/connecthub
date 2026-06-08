@@ -36,7 +36,7 @@ VALUES
     NULL,
     'New photos posted',
     'Someone added photos to a public hiking group.',
-    '/uploads/events/event_68e397e83d7f7.png',
+    '/assets/images/feed/dummy-photo.png',
     'public',
     '{"icon":"camera","color":"warning"}',
     NOW() - INTERVAL '15 minutes'
@@ -83,3 +83,4 @@ VALUES
     '{"icon":"user-plus","color":"primary"}',
     NOW() - INTERVAL '1 hour'
 );
+

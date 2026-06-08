@@ -636,3 +636,106 @@ body:has(.dashboard-live-layout) footer {
     padding-top: 7rem !important;
   }
 }
+
+/* --- Dashboard final layout: remove top dead gap and sticky live feed header --- */
+
+/* Remove the big empty band above dashboard content */
+body:has(.dashboard-live-layout) main.py-4 {
+  padding-top: 0 !important;
+}
+
+.dashboard-live-layout {
+  margin-top: 1rem !important;
+  padding-top: 0 !important;
+}
+
+/* Keep the dashboard area below the global navbar */
+@media (min-width: 1201px) {
+  .dashboard-live-layout {
+    height: calc(100vh - 96px) !important;
+  }
+}
+
+/* Centre feed scrolls, but card header stays visible */
+.dashboard-feed {
+  height: 100% !important;
+  overflow-y: auto !important;
+  min-height: 0;
+}
+
+.live-feed-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.live-feed-card > .card-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #fff;
+}
+
+.live-feed-card > .card-body {
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding-bottom: 4rem;
+}
+
+/* Prevent double scroll inside centre area */
+.dashboard-feed {
+  overflow: hidden !important;
+}
+
+/* Mobile/tablet: return to normal page flow */
+@media (max-width: 1200px) {
+  body:has(.dashboard-live-layout) main.py-4 {
+    padding-top: 0 !important;
+  }
+
+  .dashboard-live-layout {
+    height: auto !important;
+    padding-top: 5rem !important;
+  }
+
+  .dashboard-feed,
+  .live-feed-card,
+  .live-feed-card > .card-body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .live-feed-card > .card-header {
+    position: static;
+  }
+}
+
+/* --- Hard remove dashboard top spacer caused by global layout/header offset --- */
+
+body:has(.dashboard-live-layout) main {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+body:has(.dashboard-live-layout) main.py-4 {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+body:has(.dashboard-live-layout) .dashboard-live-layout {
+  transform: translateY(-70px);
+  height: calc(100vh - 26px) !important;
+  margin-bottom: -70px !important;
+}
+
+/* If the dashboard is pulled too high, reduce -70px to -50px */
+@media (max-width: 1200px) {
+  body:has(.dashboard-live-layout) .dashboard-live-layout {
+    transform: none;
+    height: auto !important;
+    margin-bottom: 0 !important;
+  }
+}
