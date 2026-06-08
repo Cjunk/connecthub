@@ -1,9 +1,9 @@
 <?php
-require_once 'config/constants.php';
-require_once 'config/bootstrap.php';
-require_once 'src/models/User.php';
-require_once 'src/models/Group.php';
-require_once 'src/models/Event.php';
+require_once __DIR__ . '/config/constants.php';
+require_once __DIR__ . '/config/bootstrap.php';
+require_once __DIR__ . '/src/models/User.php';
+require_once __DIR__ . '/src/models/Group.php';
+require_once __DIR__ . '/src/models/Event.php';
 
 if (!isLoggedIn()) redirect(BASE_URL . '/login.php');
 $currentUser = getCurrentUser();
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $members = $groupModel->getMembers($group['id']);
 $managers = $groupModel->getGroupManagers($group['id']);
 $pageTitle = 'Manage ' . $group['name'];
-include 'src/views/layouts/header.php';
+include __DIR__ . '/src/views/layouts/header.php';
 ?>
 
 <div class="container mt-4 group-manage">
@@ -210,4 +210,4 @@ include 'src/views/layouts/header.php';
 .card { border-radius:10px; }
 </style>
 
-<?php include 'src/views/layouts/footer.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/footer.php'; ?>
