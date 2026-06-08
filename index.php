@@ -9,6 +9,7 @@ $pageTitle = 'Welcome to Uhura';
 ?>
 
 <?php include $basePath . 'src/views/layouts/header.php'; ?>
+<link rel="stylesheet" href="<?= BASE_URL; ?>/assets/css/index.css">
 
 <!-- Hero Section -->
 <section class="hero-section text-white">
@@ -184,22 +185,5 @@ $pageTitle = 'Welcome to Uhura';
 </section>
 <?php endif; ?>
 
-<style>
-.hero-section {
-    background: linear-gradient(135deg, #1e5f2a 0%, #2d8f3f 50%, #4db365 100%);
-}
-.min-vh-50 {
-    min-height: 50vh;
-}
-.fa-10x {
-    font-size: 10em;
-}
-.feature-icon {
-    transition: transform 0.3s ease;
-}
-.card:hover .feature-icon {
-    transform: scale(1.1);
-}
-</style>
-
 <?php include $basePath . 'src/views/layouts/footer.php'; ?>
+

@@ -1,0 +1,30 @@
+/* Outdoor adventure palette (subtle, professional) */
+.text-forest { color: #2f6d3a; }
+.btn-forest { background-color: #2f6d3a; border-color: #2f6d3a; color: #fff; }
+.btn-forest:hover { background-color: #285d32; border-color: #285d32; color: #fff; }
+.section-title { color: #2f6d3a; margin: 0 0 0.75rem; font-weight: 600; }
+
+/* Banner preview inside card */
+.banner-wrap {
+  width: 100%;
+  background: #f6f3ed; /* sandstone tint */
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  overflow: hidden;
+}
+.banner-img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  object-position: center center;
+}
+
+
+
+/* Keep numeric spinners visible (Chrome/Edge) – default is fine, but ensure no reset kills it */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { opacity: 1; }
+
+/* Submit spinner */
+#submitIcon.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }

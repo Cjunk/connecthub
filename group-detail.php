@@ -314,37 +314,6 @@ include __DIR__ . '/src/views/layouts/header.php';
   </div>
 </div>
 
-<style>
-.text-forest { color:#2f6d3a; }
-.bg-sandstone { background:#f6f3ed; }
-.bg-forest { background:#2f6d3a; }
-.btn-forest { background:#2f6d3a; color:#fff; border-color:#2f6d3a; }
-.btn-forest:hover { background:#285d32; color:#fff; border-color:#285d32; }
-.placeholder-banner {
-  background: linear-gradient(135deg,#e9e4d8,#f6f3ed);
-  font-weight:500;
-  border:2px dashed #ccc;
-}
-.group-detail .card { border-radius:10px; }
-
-/* Enhanced Tab Styling */
-.nav-tabs .nav-link.active {
-  background-color: #2f6d3a !important;
-  color: white !important;
-  border-color: #2f6d3a #2f6d3a #f6f3ed !important;
-}
-.nav-tabs .nav-link {
-  color: #2f6d3a;
-  font-weight: 500;
-}
-
-/* Event Card Polish */
-.event-card:hover {
-  background: #f9f9f4;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  transition: 0.2s ease;
-}
-</style>
-
 <?php include __DIR__ . '/src/views/layouts/footer.php'; ?>
+
 

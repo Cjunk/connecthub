@@ -42,6 +42,7 @@ $pageTitle = !empty($filters['mine']) ? 'My Groups' : 'Browse Groups';
 ?>
 
 <?php include __DIR__ . '/src/views/layouts/header.php'; ?>
+<link rel="stylesheet" href="<?= BASE_URL; ?>/assets/css/groups.css">
 
 <div class="container">
     <?php
@@ -260,19 +261,5 @@ $pageTitle = !empty($filters['mine']) ? 'My Groups' : 'Browse Groups';
     </div>
 </div>
 
-<style>
-.group-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.group-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.bg-gradient-primary {
-    background: linear-gradient(45deg, #007bff, #0056b3);
-}
-</style>
-
 <?php include __DIR__ . '/src/views/layouts/footer.php'; ?>
+

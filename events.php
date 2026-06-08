@@ -347,23 +347,6 @@ require_once __DIR__ . '/src/views/layouts/header.php';
   </div>
 </div>
 
-<style>
-.event-card { transition: all .3s ease; border: 1px solid rgba(0,0,0,.08); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
-.event-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.1); border-color: rgba(0,0,0,.12); }
-.event-date-badge { min-width: 32px; border: 1px solid rgba(0,0,0,.1); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-.card-img-top { transition: transform .3s ease; }
-.event-card:hover .card-img-top { transform: scale(1.05); }
-.bg-gradient-primary { background: linear-gradient(135deg, var(--bs-primary) 0%, #6f42c1 100%); }
-.badge { font-size: .75rem; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
-.btn-sm { border-radius: 20px; font-weight: 500; }
-.event-card .card-title a:hover { color: var(--bs-primary) !important; }
-@media (max-width: 768px) {
-  .event-card { margin-bottom: 1rem; }
-  .event-date-badge { min-width: 28px; font-size: .7rem; }
-  .card-img-top, .bg-gradient-primary { height: 100px !important; }
-}
-</style>
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('filters-form');
@@ -486,4 +469,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <?php require_once __DIR__ . '/src/views/layouts/footer.php'; ?>
+
 

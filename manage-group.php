@@ -200,14 +200,5 @@ include __DIR__ . '/src/views/layouts/header.php';
   </div>
 </div>
 
-<style>
-.text-forest { color:#2f6d3a; }
-.bg-sandstone { background:#f6f3ed; }
-.bg-forest { background:#2f6d3a; }
-.btn-forest { background:#2f6d3a; color:#fff; border-color:#2f6d3a; }
-.btn-forest:hover { background:#285d32; color:#fff; }
-.placeholder-banner { background:linear-gradient(135deg,#e9e4d8,#f6f3ed); border:2px dashed #ccc; }
-.card { border-radius:10px; }
-</style>
-
 <?php include __DIR__ . '/src/views/layouts/footer.php'; ?>
+
