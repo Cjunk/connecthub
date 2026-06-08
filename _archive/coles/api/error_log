@@ -1,5 +1,0 @@
-[04-Oct-2025 10:51:32 UTC] PHP Warning:  require_once(includes/auth.php): Failed to open stream: No such file or directory in /home/phnk96925bbc/public_html/coles/api/debug_holidays.php on line 6
-[04-Oct-2025 10:51:32 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'includes/auth.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/phnk96925bbc/public_html/coles/api/debug_holidays.php:6
-Stack trace:
-#0 {main}
-  thrown in /home/phnk96925bbc/public_html/coles/api/debug_holidays.php on line 6
