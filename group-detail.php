@@ -1,9 +1,9 @@
 <?php
 require_once __DIR__ . '/config/constants.php';
 require_once __DIR__ . '/config/bootstrap.php';
-require_once 'src/models/User.php';
-require_once 'src/models/Group.php';
-require_once 'src/models/Event.php';
+require_once __DIR__ . '/src/models/User.php';
+require_once __DIR__ . '/src/models/Group.php';
+require_once __DIR__ . '/src/models/Event.php';
 
 if (!isLoggedIn()) redirect(BASE_URL . '/login.php');
 $currentUser = getCurrentUser();
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasValidMembership) {
 
 $members = $groupModel->getMembers($group['id']);
 $pageTitle = $group['name'];
-include 'src/views/layouts/header.php';
+include __DIR__ . '/src/views/layouts/header.php';
 ?>
 
 <div class="container mt-4 group-detail">
@@ -346,5 +346,5 @@ include 'src/views/layouts/header.php';
 }
 </style>
 
-<?php include 'src/views/layouts/footer.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/footer.php'; ?>
 
