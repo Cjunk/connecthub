@@ -1,56 +1,65 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const photos = window.dashboardHeroPhotos || [];
-  const thumbs   = Array.from(document.querySelectorAll('.photo-pile a.polaroid'));
-  const captions = Array.from(document.querySelectorAll('.photo-pile .caption')).map(c => c.textContent.trim() || 'Photo');
+  const thumbs = Array.from(document.querySelectorAll('.photo-pile a.polaroid'));
+  const photos = window.dashboardHeroPhotos?.length
+    ? window.dashboardHeroPhotos
+    : thumbs.map(a => a.getAttribute('href'));
 
-  // Lightbox elements
-  const lb        = document.getElementById('ch-lightbox');
-  const lbImg     = lb.querySelector('.ch-img');
-  const lbClose   = lb.querySelector('.ch-close');
-  const lbPrev    = lb.querySelector('.ch-prev');
-  const lbNext    = lb.querySelector('.ch-next');
-  const lbCap     = lb.querySelector('.ch-caption');
-  const lbCount   = lb.querySelector('.ch-count');
+  const captions = Array.from(document.querySelectorAll('.photo-pile .caption'))
+    .map(c => c.textContent.trim() || 'Photo');
 
-  let idx = 0, open = false, touchStartX = 0;
+  const lb = document.getElementById('ch-lightbox');
+  if (!lb || !photos.length) return;
 
-  // Dynamic close button positioning to account for navbar height
+  const lbImg = document.getElementById('ch-lightbox-img') || lb.querySelector('.ch-img');
+  const lbClose = lb.querySelector('.ch-close');
+  const lbPrev = lb.querySelector('.ch-prev');
+  const lbNext = lb.querySelector('.ch-next');
+  const lbCap = document.getElementById('ch-lightbox-caption') || lb.querySelector('.ch-caption');
+  const lbCount = lb.querySelector('.ch-count');
+
+  if (!lbImg || !lbClose || !lbPrev || !lbNext) return;
+
+  let idx = 0;
+  let open = false;
+  let touchStartX = 0;
+
   function positionCloseButton() {
     const navbar = document.querySelector('.navbar');
-    if (navbar) {
-      const navbarHeight = navbar.offsetHeight;
-      lbClose.style.top = (navbarHeight + 10) + 'px'; // 10px padding below navbar
+    if (navbar && lbClose) {
+      lbClose.style.top = `${navbar.offsetHeight + 10}px`;
     }
   }
 
-  function setImg(i){
+  function setImg(i) {
     idx = (i + photos.length) % photos.length;
-    lbImg.src = photos[idx];
+
+    lbImg.src = photos[idx] || '';
     lbImg.alt = captions[idx] || 'Photo';
-    lbCap.textContent = captions[idx] || 'Photo';
-    lbCount.textContent = (idx+1) + ' / ' + photos.length;
+
+    if (lbCap) {
+      lbCap.textContent = captions[idx] || 'Photo';
+    }
+
+    if (lbCount) {
+      lbCount.textContent = `${idx + 1} / ${photos.length}`;
+    }
   }
 
-  function show(i){
+  function show(i) {
     setImg(i);
-    positionCloseButton(); // Position button before showing
+    positionCloseButton();
     lb.classList.remove('ch-hidden');
     document.body.style.overflow = 'hidden';
     open = true;
   }
-  function hide(){
+
+  function hide() {
     lb.classList.add('ch-hidden');
     document.body.style.overflow = '';
     lbImg.removeAttribute('src');
     open = false;
   }
 
-  // Position button on window resize in case navbar height changes
-  window.addEventListener('resize', () => {
-    if (open) positionCloseButton();
-  });
-
-  // Open on thumbnail click
   thumbs.forEach((a, i) => {
     a.addEventListener('click', (e) => {
       e.preventDefault();
@@ -58,33 +67,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Controls
   lbClose.addEventListener('click', hide);
-  lbPrev.addEventListener('click', () => setImg(idx-1));
-  lbNext.addEventListener('click', () => setImg(idx+1));
+  lbPrev.addEventListener('click', () => setImg(idx - 1));
+  lbNext.addEventListener('click', () => setImg(idx + 1));
 
-  // Click outside image to close
   lb.addEventListener('click', (e) => {
     if (e.target === lb) hide();
   });
 
-  // Keyboard
   document.addEventListener('keydown', (e) => {
     if (!open) return;
+
     if (e.key === 'Escape') hide();
-    if (e.key === 'ArrowLeft') setImg(idx-1);
-    if (e.key === 'ArrowRight') setImg(idx+1);
+    if (e.key === 'ArrowLeft') setImg(idx - 1);
+    if (e.key === 'ArrowRight') setImg(idx + 1);
   });
 
-  // Basic swipe (mobile)
-  lb.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, {passive:true});
+  lb.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].clientX;
+  }, { passive: true });
+
   lb.addEventListener('touchend', (e) => {
     const dx = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(dx) > 40) (dx > 0 ? setImg(idx-1) : setImg(idx+1));
-  }, {passive:true});
+    if (Math.abs(dx) > 40) {
+      dx > 0 ? setImg(idx - 1) : setImg(idx + 1);
+    }
+  }, { passive: true });
 
-  // Preload next/prev for snappier nav
-  function preload(src){ const i = new Image(); i.src = src; }
-  lbNext.addEventListener('click', () => preload(photos[(idx+1)%photos.length]));
-  lbPrev.addEventListener('click', () => preload(photos[(idx-1+photos.length)%photos.length]));
+  function preload(src) {
+    if (!src) return;
+    const image = new Image();
+    image.src = src;
+  }
+
+  lbNext.addEventListener('click', () => preload(photos[(idx + 1) % photos.length]));
+  lbPrev.addEventListener('click', () => preload(photos[(idx - 1 + photos.length) % photos.length]));
+
+  window.addEventListener('resize', () => {
+    if (open) positionCloseButton();
+  });
 });

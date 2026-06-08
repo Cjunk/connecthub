@@ -26,6 +26,7 @@
     <?php if (file_exists(ROOT_PATH . '/assets/css/clean-style.css')): ?>
         <link href="assets/css/clean-style.css" rel="stylesheet">
     <?php endif; ?>
+    <link href="<?php echo BASE_URL; ?>/assets/css/header-responsive.css" rel="stylesheet">
     
     <!-- Ensure background texture loads -->
     <style>

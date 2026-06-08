@@ -2,6 +2,57 @@
 <link rel="stylesheet" href="<?= BASE_URL; ?>/assets/css/dashboard.css">
 
 <div class="container dashboard-live-layout my-4">
+    <!-- Mobile / tablet dashboard action menu -->
+    <div class="dashboard-mobile-actions card shadow-sm mb-3">
+        <div class="card-body d-flex align-items-center justify-content-between gap-2">
+            <div>
+                <strong>Dashboard</strong>
+                <div class="small text-muted">Live updates and quick actions</div>
+            </div>
+
+            <div class="dropdown">
+                <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dashboardActionMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-bars me-1"></i> Menu
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dashboardActionMenu">
+                    <li>
+                        <a class="dropdown-item" href="<?= BASE_URL; ?>/events.php">
+                            <i class="fas fa-calendar-alt me-2"></i> Browse Events
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="<?= BASE_URL; ?>/groups.php">
+                            <i class="fas fa-users me-2"></i> Browse Groups
+                        </a>
+                    </li>
+
+                    <?php if (isOrganizer() && $hasMembership): ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="<?= BASE_URL; ?>/create-event.php">
+                                <i class="fas fa-plus-circle me-2"></i> Create Event
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?= BASE_URL; ?>/create-group.php">
+                                <i class="fas fa-layer-group me-2"></i> Create Group
+                            </a>
+                        </li>
+                    <?php endif; ?>
+
+                    <?php if (!$hasMembership): ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-warning fw-semibold" href="<?= BASE_URL; ?>/membership.php">
+                                <i class="fas fa-crown me-2"></i> Get Membership
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+        </div>
+    </div>
 
     <div class="dashboard-grid">
 
@@ -194,7 +245,7 @@
 <div id="ch-lightbox" class="ch-lightbox ch-hidden" aria-hidden="true" role="dialog" aria-modal="true">
   <button class="ch-close" aria-label="Close">&times;</button>
   <button class="ch-nav ch-prev" aria-label="Previous">&#10094;</button>
-  <img id="ch-lightbox-img" src="" alt="">
+  <img id="ch-lightbox-img" class="ch-img" src="" alt="">
   <div class="ch-meta">
     <div id="ch-lightbox-caption"></div>
   </div>
@@ -208,3 +259,5 @@ window.dashboardHeroPhotos = <?= json_encode(array_slice($heroPhotos, 0, 4), JSO
 <script src="<?= BASE_URL; ?>/assets/js/dashboard-feed.js"></script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>
+
+
