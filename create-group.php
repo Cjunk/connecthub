@@ -23,7 +23,7 @@ if (!hasValidMembership($currentUser)) {
     redirect(BASE_URL . '/membership.php');
 }
 
-require_once 'src/models/Group.php';
+require_once __DIR__ . '/src/models/Group.php';
 $groupModel = new Group();
 
 // Get categories for the form
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle = 'Create Group';
 ?>
 
-<?php include 'src/views/layouts/header.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/header.php'; ?>
 
 <div class="container">
     <div class="row justify-content-center">
@@ -394,4 +394,4 @@ function removePreview() {
 }
 </script>
 
-<?php include 'src/views/layouts/footer.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/footer.php'; ?>
