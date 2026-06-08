@@ -1,11 +1,11 @@
 <?php
 // === INITIALIZATION ===
-require_once 'config/constants.php';
-require_once 'config/bootstrap.php';
-require_once 'config/ads.php';
-require_once 'src/models/User.php';
-require_once 'src/models/Group.php';
-require_once 'src/models/Event.php';
+require_once __DIR__ . '/config/constants.php';
+require_once __DIR__ . '/config/bootstrap.php';
+require_once __DIR__ . '/config/ads.php';
+require_once __DIR__ . '/src/models/User.php';
+require_once __DIR__ . '/src/models/Group.php';
+require_once __DIR__ . '/src/models/Event.php';
 
 // === AUTH CHECK ===
 if (!isLoggedIn()) redirect(BASE_URL . '/login.php');
@@ -68,7 +68,7 @@ function emptyBlock($icon, $title, $text, $btnLink, $btnLabel, $btnClass='primar
     HTML;
 }
 
-include 'src/views/layouts/header.php';
+include __DIR__ . '/src/views/layouts/header.php';
 ?>
 
 <div class="container">
@@ -537,4 +537,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<?php include 'src/views/layouts/footer.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/footer.php'; ?>
