@@ -13,22 +13,28 @@ class ActivityFeed
     {
         $sql = "
             SELECT
-                id,
-                actor_user_id,
-                activity_type,
-                entity_type,
-                entity_id,
-                group_id,
-                event_id,
-                title,
-                message,
-                image_url,
-                visibility,
-                metadata,
-                created_at
-            FROM activity_feed
-            WHERE visibility = 'public'
-            ORDER BY created_at DESC
+                af.id,
+                af.actor_user_id,
+                af.activity_type,
+                af.entity_type,
+                af.entity_id,
+                af.group_id,
+                af.event_id,
+                af.title,
+                af.message,
+                af.image_url,
+                af.visibility,
+                af.metadata,
+                af.created_at,
+                g.name AS group_name,
+                g.slug AS group_slug,
+                e.title AS event_title,
+                e.slug AS event_slug
+            FROM activity_feed af
+            LEFT JOIN groups g ON g.id = af.group_id
+            LEFT JOIN events e ON e.id = af.event_id
+            WHERE af.visibility = 'public'
+            ORDER BY af.created_at DESC
             LIMIT :limit
         ";
 
@@ -41,23 +47,29 @@ class ActivityFeed
     {
         $sql = "
             SELECT
-                id,
-                actor_user_id,
-                activity_type,
-                entity_type,
-                entity_id,
-                group_id,
-                event_id,
-                title,
-                message,
-                image_url,
-                visibility,
-                metadata,
-                created_at
-            FROM activity_feed
-            WHERE visibility = 'public'
-              AND id > :after_id
-            ORDER BY id DESC
+                af.id,
+                af.actor_user_id,
+                af.activity_type,
+                af.entity_type,
+                af.entity_id,
+                af.group_id,
+                af.event_id,
+                af.title,
+                af.message,
+                af.image_url,
+                af.visibility,
+                af.metadata,
+                af.created_at,
+                g.name AS group_name,
+                g.slug AS group_slug,
+                e.title AS event_title,
+                e.slug AS event_slug
+            FROM activity_feed af
+            LEFT JOIN groups g ON g.id = af.group_id
+            LEFT JOIN events e ON e.id = af.event_id
+            WHERE af.visibility = 'public'
+              AND af.id > :after_id
+            ORDER BY af.id DESC
             LIMIT :limit
         ";
 
@@ -67,3 +79,4 @@ class ActivityFeed
         ]);
     }
 }
+

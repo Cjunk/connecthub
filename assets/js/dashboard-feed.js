@@ -38,6 +38,27 @@ document.addEventListener('DOMContentLoaded', () => {
     return map[item.activity_type] || 'bg-primary';
   }
 
+  function feedTitle(item) {
+    const groupName = item.group_name || '';
+    const eventName = item.event_title || '';
+
+    const prefix = [groupName, eventName].filter(Boolean).join(' - ');
+
+    if (!prefix) return item.title || 'New activity';
+
+    return `${prefix} - ${item.title || 'New activity'}`;
+  }
+  function feedUrl(item) {
+    if (item.event_slug) {
+      return `/event-detail.php?slug=${encodeURIComponent(item.event_slug)}`;
+    }
+
+    if (item.group_slug) {
+      return `/group-detail.php?slug=${encodeURIComponent(item.group_slug)}`;
+    }
+
+    return null;
+  }
   function renderItem(item) {
     const id = Number(item.id || 0);
     if (id > latestId) latestId = id;
@@ -46,18 +67,22 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `<div class="feed-image mt-2"><img src="${escapeHtml(item.image_url)}" alt=""></div>`
       : '';
 
+    const url = feedUrl(item);
+    const openTag = url ? `<a href="${escapeHtml(url)}" class="feed-item feed-item-link" data-feed-id="${id}">` : `<div class="feed-item" data-feed-id="${id}">`;
+    const closeTag = url ? '</a>' : '</div>';
+
     return `
-      <div class="feed-item" data-feed-id="${id}">
+      ${openTag}
         <div class="feed-icon ${colorFor(item)}">
           <i class="fas ${iconFor(item)}"></i>
         </div>
         <div class="feed-content">
-          <strong>${escapeHtml(item.title)}</strong>
+          <strong>${escapeHtml(feedTitle(item))}</strong>
           <div class="text-muted small">${escapeHtml(item.message)}</div>
           ${imageHtml}
           <div class="small text-muted mt-1">${escapeHtml(item.created_at)}</div>
         </div>
-      </div>
+      ${closeTag}
     `;
   }
 
@@ -88,3 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFeed();
   setInterval(loadFeed, 30000);
 });
+
+
+
