@@ -87,3 +87,4 @@ $pageTitle = 'Register';
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>
 
+

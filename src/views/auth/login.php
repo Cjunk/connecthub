@@ -60,3 +60,4 @@ $pageTitle = 'Login';
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>
 
+
