@@ -1,0 +1,55 @@
+/* EMERGENCY DESKTOP FIX - Temporary override for mobile classes */
+
+/* Force show all mobile-hidden content on desktop */
+@media (min-width: 768px) {
+    .d-mobile-none {
+        display: block !important;
+    }
+    
+    .d-mobile-only {
+        display: none !important;
+    }
+    
+    /* Reset mobile text utilities on desktop */
+    .text-mobile-center {
+        text-align: initial !important;
+    }
+    
+    .text-mobile-left {
+        text-align: initial !important;
+    }
+    
+    .fs-mobile-small,
+    .fs-mobile-large {
+        font-size: initial !important;
+    }
+    
+    /* Reset mobile spacing on desktop */
+    .p-mobile-2 {
+        padding: initial !important;
+    }
+    
+    .m-mobile-2 {
+        margin: initial !important;
+    }
+    
+    .mb-mobile-3 {
+        margin-bottom: initial !important;
+    }
+    
+    .mt-mobile-3 {
+        margin-top: initial !important;
+    }
+}
+
+/* Ensure cards and buttons work normally on desktop */
+@media (min-width: 768px) {
+    .card:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px) !important;
+    }
+}
