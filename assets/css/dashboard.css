@@ -342,3 +342,297 @@ body:has(.dashboard-live-layout) footer {
   color: inherit;
   transform: translateX(2px);
 }
+
+/* --- Professional responsive dashboard layout --- */
+
+.dashboard-mobile-actions {
+  display: none;
+}
+
+.dashboard-grid {
+  grid-template-columns: 280px minmax(420px, 1fr) 320px;
+}
+
+/* Desktop polish */
+.dashboard-sidebar .card,
+.dashboard-feed .card {
+  border-radius: 14px;
+}
+
+.dashboard-sidebar .card-header,
+.live-feed-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+/* Feed should feel like the main product */
+.dashboard-feed {
+  scroll-behavior: smooth;
+}
+
+.feed-item {
+  border-radius: 12px;
+  padding-left: .75rem;
+  padding-right: .75rem;
+}
+
+.feed-content {
+  min-width: 0;
+}
+
+.feed-image img {
+  max-width: 100%;
+  border-radius: 10px;
+  display: block;
+}
+
+/* Medium screens: make feed dominant, move sidebars below */
+@media (max-width: 1200px) {
+  html:has(.dashboard-live-layout),
+  body:has(.dashboard-live-layout) {
+    height: auto;
+    overflow: auto;
+  }
+
+  .dashboard-live-layout {
+    height: auto;
+    overflow: visible;
+  }
+
+  .dashboard-mobile-actions {
+    display: block;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: auto;
+    overflow: visible;
+    gap: 1rem;
+  }
+
+  .dashboard-feed {
+    grid-column: 1 / -1;
+    order: 1;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .dashboard-left {
+    order: 2;
+  }
+
+  .dashboard-right {
+    order: 3;
+  }
+
+  .dashboard-left,
+  .dashboard-right {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    position: static;
+  }
+
+  .live-feed-card {
+    min-height: auto;
+  }
+
+  body:has(.dashboard-live-layout) footer {
+    display: block;
+  }
+}
+
+/* Mobile: action menu at top, live feed first, side cards underneath */
+@media (max-width: 768px) {
+  .dashboard-live-layout {
+    margin-top: .75rem !important;
+    padding-left: .75rem;
+    padding-right: .75rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: .85rem;
+  }
+
+  .dashboard-mobile-actions .card-body {
+    padding: .85rem;
+  }
+
+  .dashboard-left {
+    order: 2;
+  }
+
+  .dashboard-feed {
+    order: 1;
+  }
+
+  .dashboard-right {
+    order: 3;
+  }
+
+  /* Hide duplicate quick actions on mobile because the menu replaces them */
+  .dashboard-left .card:nth-child(2) {
+    display: none;
+  }
+
+  .live-feed-card .card-header {
+    align-items: flex-start !important;
+    gap: .5rem;
+  }
+
+  .live-feed-card .card-header .badge {
+    margin-top: .15rem;
+  }
+
+  .feed-item,
+  .feed-item-link {
+    gap: .65rem;
+    padding: .85rem .5rem;
+  }
+
+  .feed-icon {
+    width: 36px;
+    height: 36px;
+    font-size: .85rem;
+  }
+
+  .compact-photo-pile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compact-photo-pile .polaroid {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 420px) {
+  .dashboard-mobile-actions .card-body {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .dashboard-mobile-actions .dropdown,
+  .dashboard-mobile-actions .dropdown button {
+    width: 100%;
+  }
+
+  .dashboard-mobile-actions .dropdown button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .compact-photo-pile {
+    grid-template-columns: 1fr;
+  }
+
+  .feed-item,
+  .feed-item-link {
+    align-items: flex-start;
+  }
+}
+
+/* --- Sticky dashboard mobile action menu --- */
+
+.dashboard-mobile-actions {
+  position: sticky;
+  top: 72px;
+  z-index: 1020;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-mobile-actions {
+    display: block;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-mobile-actions {
+    top: 64px;
+  }
+}
+
+/* --- Force dashboard action menu to stay fixed on smaller screens --- */
+
+@media (max-width: 1200px) {
+  .dashboard-mobile-actions {
+    position: fixed !important;
+    top: 72px;
+    left: 0;
+    right: 0;
+    z-index: 3000;
+    padding: 0 .75rem;
+  }
+
+  .dashboard-mobile-actions .card {
+    max-width: 1140px;
+    margin: 0 auto;
+    border-radius: 0 0 14px 14px;
+  }
+
+  .dashboard-live-layout {
+    padding-top: 5.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-mobile-actions {
+    top: 64px;
+    padding: 0 .5rem;
+  }
+
+  .dashboard-live-layout {
+    padding-top: 5.75rem;
+  }
+}
+
+/* --- Adjust fixed dashboard menu below global header --- */
+
+@media (max-width: 1200px) {
+  .dashboard-mobile-actions {
+    top: 96px !important;
+  }
+
+  .dashboard-live-layout {
+    padding-top: 7rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-mobile-actions {
+    top: 88px !important;
+  }
+
+  .dashboard-live-layout {
+    padding-top: 7rem !important;
+  }
+}
+
+/* --- Adjust fixed dashboard menu below global header --- */
+
+@media (max-width: 1200px) {
+  .dashboard-mobile-actions {
+    top: 96px !important;
+  }
+
+  .dashboard-live-layout {
+    padding-top: 7rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-mobile-actions {
+    top: 88px !important;
+  }
+
+  .dashboard-live-layout {
+    padding-top: 7rem !important;
+  }
+}
