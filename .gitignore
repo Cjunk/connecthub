@@ -100,19 +100,9 @@ config/*prod*
 *.tar
 *.tar.gz
 *.rar
-*.7zv a u l t e d g e / P y t h o n - 3 . 1 2 . 3 / 
- 
- v a u l t e d g e / P y t h o n - 3 . 1 2 . 3 / 
- 
- v a u l t e d g e / P y t h o n - 3 . 1 2 . 3 / 
- 
- v a u l t e d g e / P y t h o n - 3 . 1 2 . 3 / 
- 
- v a u l t e d g e / P y t h o n - 3 . 1 2 . 3 . t g z 
- 
-vaultedge/Python-3.12.3/
-vaultedge/Python-3.12.3.tgzc o n n e c t h u b / 
+*.7z
+
+# Archived / duplicate folders
+_archive/
 connecthub/
-vaultedge/Python-3.12.3/
-vaultedge/Python-3.12.3.tgz
- 
+vaultedge/
