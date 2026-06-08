@@ -166,16 +166,16 @@ $pageTitle = !empty($filters['mine']) ? 'My Groups' : 'Browse Groups';
                         <?php else: ?>
                             <div class="card-img-top bg-gradient-primary d-flex align-items-center justify-content-center" 
                                  style="height: 200px;">
-                                <i class="<?php echo $group['category_icon'] ?: 'fas fa-users'; ?> fa-3x text-white"></i>
+                                <i class="<?php echo htmlspecialchars($group['category_icon'] ?? 'fas fa-users'); ?> fa-3x text-white"></i>
                             </div>
                         <?php endif; ?>
                         
                         <div class="card-body d-flex flex-column">
                             <!-- Category Badge -->
-                            <?php if ($group['category_name']): ?>
+                            <?php if (!empty($group['category_name'])): ?>
                                 <div class="mb-2">
-                                    <span class="badge" style="background-color: <?php echo $group['category_color'] ?: '#6c757d'; ?>">
-                                        <i class="<?php echo $group['category_icon']; ?> me-1"></i>
+                                    <span class="badge" style="background-color: <?php echo htmlspecialchars($group['category_color'] ?? '#6c757d'); ?>">
+                                        <i class="<?php echo htmlspecialchars($group['category_icon'] ?? 'fas fa-users'); ?> me-1"></i>
                                         <?php echo htmlspecialchars($group['category_name']); ?>
                                     </span>
                                 </div>
