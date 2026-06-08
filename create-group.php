@@ -1,9 +1,9 @@
 <?php
-require_once $basePath . 'config/constants.php';
-require_once $basePath . 'config/bootstrap.php';
+require_once __DIR__ . '/config/constants.php';
+require_once __DIR__ . '/config/bootstrap.php';
 
 // Ensure User model is loaded for membership checking
-require_once 'src/models/User.php';
+require_once __DIR__ . '/src/models/User.php';
 
 // Check if user is logged in
 if (!isLoggedIn()) {
