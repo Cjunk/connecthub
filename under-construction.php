@@ -1,11 +1,11 @@
 <?php
-require_once 'config/constants.php';
-require_once 'config/bootstrap.php';
+require_once __DIR__ . '/config/constants.php';
+require_once __DIR__ . '/config/bootstrap.php';
 
 $pageTitle = 'Under Construction';
 ?>
 
-<?php include 'src/views/layouts/header.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/header.php'; ?>
 
 <div class="container">
     <div class="row justify-content-center">
@@ -240,4 +240,4 @@ $pageTitle = 'Under Construction';
 }
 </style>
 
-<?php include 'src/views/layouts/footer.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/footer.php'; ?>
