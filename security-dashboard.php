@@ -16,7 +16,7 @@ if (!isLoggedIn() || $_SESSION['user_role'] !== 'admin') {
 $stats = Security::getSecurityStats();
 $recentFailures = Security::getRecentFailedAttempts(20);
 
-include 'src/views/layout/header.php';
+include 'src/views/layouts/header.php';
 ?>
 
 <div class="container mt-4">
@@ -209,4 +209,4 @@ function analyzeIP(ip) {
 }
 </script>
 
-<?php include 'src/views/layout/footer.php'; ?>
+<?php include 'src/views/layouts/footer.php'; ?>
