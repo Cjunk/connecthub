@@ -106,3 +106,15 @@ config/*prod*
 _archive/
 connecthub/
 vaultedge/
+
+# Runtime uploaded files
+uploads/events/*
+!uploads/events/.gitkeep
+uploads/event-media/*
+!uploads/event-media/.gitkeep
+uploads/groups/*
+!uploads/groups/.gitkeep
+uploads/profiles/*
+!uploads/profiles/.gitkeep
+uploads/documents/*
+!uploads/documents/.gitkeep
