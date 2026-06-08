@@ -43,6 +43,17 @@
 		"files.associations": {
 			"*.php": "php"
 		},
+		"files.exclude": {
+			"cgi-bin": true,
+			"connecthub": true,
+			"ordertracker.com.au": true,
+			"theextremlysimpletodolist.com.au": true,
+			"portfolios": true,
+			"coles": true,
+			"testingphp": true,
+			"null": true,
+			"vaultedge": true
+		},
 		"emmet.includeLanguages": {
 			"php": "html"
 		}
