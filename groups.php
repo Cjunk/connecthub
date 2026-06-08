@@ -3,7 +3,7 @@ require_once __DIR__ . '/config/constants.php';
 require_once __DIR__ . '/config/bootstrap.php';
 
 // Ensure User model is loaded for membership checking
-require_once 'src/models/User.php';
+require_once __DIR__ . '/src/models/User.php';
 
 // Check if user is logged in
 if (!isLoggedIn()) {
@@ -14,7 +14,7 @@ if (!isLoggedIn()) {
 $currentUser = getCurrentUser();
 $hasValidMembership = hasValidMembership($currentUser);
 
-require_once 'src/models/Group.php';
+require_once __DIR__ . '/src/models/Group.php';
 $groupModel = new Group();
 
 // Get filters
@@ -41,7 +41,7 @@ $categories = $groupModel->getCategories();
 $pageTitle = !empty($filters['mine']) ? 'My Groups' : 'Browse Groups';
 ?>
 
-<?php include 'src/views/layouts/header.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/header.php'; ?>
 
 <div class="container">
     <?php
@@ -51,7 +51,7 @@ $pageTitle = !empty($filters['mine']) ? 'My Groups' : 'Browse Groups';
     $buttonText = $hasValidMembership ? '<i class="fas fa-plus me-2"></i>' . (!empty($filters['mine']) ? 'Browse All Groups' : 'Browse Events') : '';
     $buttonLink = !empty($filters['mine']) ? "/groups.php" : "/events.php";
     $buttonClass = "btn btn-primary";
-    include 'src/views/components/page-header.php';
+    include __DIR__ . '/src/views/components/page-header.php';
     ?>
 
     <!-- Membership Alert -->
@@ -275,4 +275,4 @@ $pageTitle = !empty($filters['mine']) ? 'My Groups' : 'Browse Groups';
 }
 </style>
 
-<?php include 'src/views/layouts/footer.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/footer.php'; ?>
