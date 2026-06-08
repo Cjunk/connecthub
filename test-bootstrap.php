@@ -6,7 +6,7 @@
 echo "Testing bootstrap loading...\n";
 
 try {
-    require_once 'config/bootstrap.php';
+    require_once __DIR__ . '/config/bootstrap.php';
     echo "✅ Bootstrap loaded successfully!\n";
     echo "✅ APP_TIMEZONE: " . APP_TIMEZONE . "\n";
     echo "✅ APP_DEBUG: " . (APP_DEBUG ? 'true' : 'false') . "\n";

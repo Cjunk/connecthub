@@ -9,6 +9,7 @@ require_once __DIR__ . '/User.php';
 
 class EventComment {
     private $db;
+    private $userColumns = null;
 
     public function __construct() {
         $this->db = Database::getInstance();
@@ -19,8 +20,7 @@ class EventComment {
      */
     public function create($data) {
         $sql = "INSERT INTO event_comments (event_id, user_id, parent_id, comment, status)
-                VALUES (:event_id, :user_id, :parent_id, :comment, :status)
-                RETURNING id";
+            VALUES (:event_id, :user_id, :parent_id, :comment, :status)";
 
         $params = [
             ':event_id' => $data['event_id'],
@@ -30,8 +30,14 @@ class EventComment {
             ':status' => $data['status'] ?? 'active'
         ];
 
-        $result = $this->db->fetch($sql, $params);
-        return $result ? $result['id'] : false;
+        $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'pgsql') {
+            $result = $this->db->fetch($sql . ' RETURNING id', $params);
+            return $result ? (int)$result['id'] : false;
+        }
+
+        $this->db->query($sql, $params);
+        return (int)$this->db->lastInsertId();
     }
 
     /**
@@ -42,7 +48,7 @@ class EventComment {
 
         $sql = "SELECT
                     ec.*,
-                    u.name as author_name,
+                    " . $this->authorNameExpression('u') . " as author_name,
                     u.email as author_email,
                     u.role as author_role,
                     COALESCE(likes.like_count, 0) as likes_count,
@@ -100,7 +106,7 @@ class EventComment {
      * Get single comment by ID
      */
     public function getById($id) {
-        $sql = "SELECT ec.*, u.name as author_name, u.email as author_email, u.role as author_role
+        $sql = "SELECT ec.*, " . $this->authorNameExpression('u') . " as author_name, u.email as author_email, u.role as author_role
                 FROM event_comments ec
                 JOIN users u ON ec.user_id = u.id
                 WHERE ec.id = :id";
@@ -150,25 +156,25 @@ class EventComment {
         // Comment author can always manage their own comments
         if ($comment['user_id'] == $userId) return true;
 
-        // Check if user is event organizer or group admin
-        $sql = "SELECT e.created_by, gm.role
-                FROM event_comments ec
-                JOIN events e ON ec.event_id = e.id
-                LEFT JOIN group_memberships gm ON e.group_id = gm.group_id AND gm.user_id = :user_id
-                WHERE ec.id = :comment_id";
+    // Check if user is group owner (active) for the event's group
+    $sql = "SELECT gm.role
+        FROM event_comments ec
+        JOIN events e ON ec.event_id = e.id
+        LEFT JOIN group_memberships gm 
+               ON e.group_id = gm.group_id 
+              AND gm.user_id = :user_id
+              AND gm.status = 'active'
+        WHERE ec.id = :comment_id";
 
         $result = $this->db->fetch($sql, [
             ':comment_id' => $commentId,
             ':user_id' => $userId
         ]);
 
-        if (!$result) return false;
+    if (!$result) return false;
 
-        // Event creator can manage comments
-        if ($result['created_by'] == $userId) return true;
-
-        // Group owners and co-hosts can manage comments
-        if (in_array($result['role'], ['owner', 'co_host'])) return true;
+    // Only group owners can manage others' comments
+    if (isset($result['role']) && $result['role'] === 'owner') return true;
 
         // Admins and super admins can manage all comments
         $userRole = $_SESSION['user_role'] ?? '';
@@ -203,5 +209,48 @@ class EventComment {
         $sql = "SELECT COUNT(*) as count FROM event_comments WHERE event_id = :event_id AND status = 'active'";
         $result = $this->db->fetch($sql, [':event_id' => $eventId]);
         return $result ? (int)$result['count'] : 0;
+    }
+
+    private function authorNameExpression($alias) {
+        if ($this->hasUserColumn('first_name') || $this->hasUserColumn('last_name')) {
+            if ($this->hasUserColumn('username')) {
+                return "COALESCE(NULLIF(CONCAT(COALESCE(" . $alias . ".first_name, ''), ' ', COALESCE(" . $alias . ".last_name, '')), ' '), " . $alias . ".username, " . $alias . ".email)";
+            }
+            return "COALESCE(NULLIF(CONCAT(COALESCE(" . $alias . ".first_name, ''), ' ', COALESCE(" . $alias . ".last_name, '')), ' '), " . $alias . ".email)";
+        }
+
+        if ($this->hasUserColumn('name')) {
+            return "COALESCE(NULLIF(" . $alias . ".name, ''), " . $alias . ".email)";
+        }
+
+        if ($this->hasUserColumn('username')) {
+            return "COALESCE(NULLIF(" . $alias . ".username, ''), " . $alias . ".email)";
+        }
+
+        return $alias . ".email";
+    }
+
+    private function hasUserColumn($columnName) {
+        return in_array($columnName, $this->getUserColumns(), true);
+    }
+
+    private function getUserColumns() {
+        if ($this->userColumns !== null) {
+            return $this->userColumns;
+        }
+
+        $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'pgsql') {
+            $sql = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users'";
+        } else {
+            $sql = "SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users'";
+        }
+
+        $rows = $this->db->fetchAll($sql);
+        $this->userColumns = array_map(static function ($row) {
+            return $row['column_name'];
+        }, $rows);
+
+        return $this->userColumns;
     }
 }

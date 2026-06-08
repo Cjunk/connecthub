@@ -5,7 +5,7 @@
  */
 
 require_once 'config/config.php';
-require_once 'config/bootstrap.php';
+require_once __DIR__ . '/config/bootstrap.php';
 
 echo "Checking and setting up security features...\n";
 

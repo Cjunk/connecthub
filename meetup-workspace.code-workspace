@@ -8,6 +8,38 @@
 	"settings": {
 		"php.suggest.basic": false,
 		"php.validate.enable": true,
+		"github.copilot.enable": {
+			"*": true,
+			"plaintext": false,
+			"markdown": false,
+			"scminput": false
+		},
+		"github.copilot.editor.enableCodeActions": true,
+		"github.copilot.renameSuggestions.triggerAutomatically": true,
+		"github.copilot.nextEditSuggestions.enabled": true,
+		"github.copilot.nextEditSuggestions.fixes": true,
+		"editor.inlineSuggest.enabled": true,
+		"editor.inlineSuggest.showToolbar": "always",
+		"editor.inlineSuggest.minShowDelay": 0,
+		"editor.inlineSuggest.syntaxHighlightingEnabled": true,
+		"chat.agent.enabled": true,
+		"github.copilot.chat.agent.autoFix": true,
+		"github.copilot.chat.codesearch.enabled": true,
+		"github.copilot.chat.editor.temporalContext.enabled": true,
+		"github.copilot.chat.edits.suggestRelatedFilesFromGitHistory": true,
+		"chat.includeApplyingInstructions": true,
+		"chat.useAgentsMdFile": true,
+		"chat.permissions.default": "default",
+		"chat.checkpoints.enabled": true,
+		"chat.checkpoints.showFileChanges": true,
+		"chat.tools.terminal.outputLocation": "terminal",
+		"chat.instructionsFilesLocations": {
+			".github/instructions": true
+		},
+		"chat.promptFilesLocations": {
+			".github/prompts": true
+		},
+		"github.copilot.chat.codeGeneration.useInstructionFiles": true,
 		"files.associations": {
 			"*.php": "php"
 		},
@@ -17,7 +49,10 @@
 	},
 	"extensions": {
 		"recommendations": [
+			"github.copilot",
+			"github.copilot-chat",
 			"bmewburn.vscode-intelephense-client",
+			"xdebug.php-debug",
 			"ms-vscode.vscode-json",
 			"formulahendry.auto-rename-tag",
 			"bradlc.vscode-tailwindcss"

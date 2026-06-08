@@ -215,17 +215,9 @@ class CommentController {
      */
     public function getComments() {
         $eventId = (int)($_GET['event_id'] ?? 0);
-        $userId = $_SESSION['user_id'] ?? null;
 
         if (!$eventId) {
             $this->jsonResponse(['error' => 'Event ID is required'], 400);
-        }
-
-        // Check if user can view comments (must be able to comment to view)
-        $canView = $userId ? $this->commentModel->canCommentOnEvent($eventId, $userId) : false;
-
-        if (!$canView) {
-            $this->jsonResponse(['error' => 'You must be attending this event to view comments'], 403);
         }
 
         $comments = $this->commentModel->getByEventId($eventId);
@@ -329,7 +321,7 @@ class CommentController {
     public function renderComments($eventId) {
         $userId = $_SESSION['user_id'] ?? null;
         $canComment = $userId ? $this->commentModel->canCommentOnEvent($eventId, $userId) : false;
-        $comments = $canComment ? $this->commentModel->getByEventId($eventId) : [];
+        $comments = $this->commentModel->getByEventId($eventId);
         $commentCount = $this->commentModel->getCommentCount($eventId);
 
         ob_start();

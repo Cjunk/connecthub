@@ -4,7 +4,7 @@
  * Run this script to create the groups tables and sample data
  */
 
-require_once 'config/constants.php';
+require_once __DIR__ . '/config/constants.php';
 require_once 'config/database.php';
 
 try {

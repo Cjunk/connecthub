@@ -303,7 +303,7 @@ footer a:hover {
 /* Flash Messages */
 .flash-messages-container {
     position: fixed;
-    top: 80px;
+    top: calc(var(--nav-stack-height, 80px) + 12px);
     left: 50%;
     transform: translateX(-50%);
     z-index: 1040;
@@ -397,7 +397,7 @@ footer a:hover {
     /* Flash messages on mobile */
     .flash-messages-container {
         width: 95%;
-        top: 70px;
+        top: calc(var(--nav-stack-height, 80px) + 10px);
     }
     
     /* Modal improvements on mobile */

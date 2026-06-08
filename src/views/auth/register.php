@@ -1,11 +1,11 @@
 <?php
-require_once '../config/constants.php';
-require_once '../config/bootstrap.php';
+require_once 'config/constants.php';
+require_once 'config/bootstrap.php';
 
 $pageTitle = 'Register';
 ?>
 
-<?php include '../src/views/layouts/header.php'; ?>
+<?php include 'src/views/layouts/header.php'; ?>
 
 <div class="container mt-3">
     <div class="row justify-content-center">
@@ -85,4 +85,4 @@ $pageTitle = 'Register';
     </div>
 </div>
 
-<?php include '../src/views/layouts/footer.php'; ?>
+<?php include 'src/views/layouts/footer.php'; ?>

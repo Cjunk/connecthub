@@ -19,7 +19,7 @@ class AuthController {
     /** Show login form */
     public function showLogin() {
         if (isLoggedIn()) redirect(BASE_URL . '/dashboard.php');
-        include '../src/views/auth/login.php';
+        include 'src/views/auth/login.php';
     }
 
     /** Process login */
@@ -32,11 +32,17 @@ class AuthController {
             redirect(BASE_URL . '/login.php');
         }
 
-        $email    = $this->normalizeEmail($_POST['email'] ?? '');
+        $loginInput = trim((string)($_POST['login'] ?? $_POST['email'] ?? ''));
         $password = $_POST['password'] ?? '';
-
-        if ($email === '' || $password === '') {
-            setFlashMessage('error', 'Please fill in all fields.');
+        $email = '';
+        $username = '';
+        if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
+            $email = $this->normalizeEmail($loginInput);
+        } else {
+            $username = $loginInput;
+        }
+        if (($email === '' && $username === '') || $password === '') {
+            setFlashMessage('error', 'Please enter your username/email and password.');
             redirect(BASE_URL . '/login.php');
         }
 
@@ -53,11 +59,17 @@ class AuthController {
         }
 
         try {
-            $user = $this->userModel->authenticate($email, $password);
+            $user = null;
+            $attemptIdentifier = $email !== '' ? $email : $username;
+            if ($email !== '') {
+                $user = $this->userModel->authenticate($email, $password);
+            } elseif ($username !== '') {
+                $user = $this->userModel->authenticateByUsername($username, $password);
+            }
             if ($user) {
                 // Record successful login and reset attempt counter
                 try {
-                    Security::recordAttempt($ip, true, $email);
+                    Security::recordAttempt($ip, true, $attemptIdentifier);
                 } catch (Exception $e) {
                     error_log("Failed to record successful login attempt: " . $e->getMessage());
                 }
@@ -68,28 +80,29 @@ class AuthController {
                 }
 
                 $_SESSION['user_id']       = $user['id'];
-                $_SESSION['user_name']     = $user['name'];
+                $_SESSION['user_name']     = getUserDisplayName($user);
                 $_SESSION['user_email']    = $user['email'];
                 $_SESSION['user_role']     = $user['role'];
                 $_SESSION['last_activity'] = time();
 
-                setFlashMessage('success', 'Welcome back, ' . explode(' ', $user['name'])[0] . '!');
+                setFlashMessage('success', 'Welcome back, ' . getUserFirstName($user) . '!');
                 redirect(BASE_URL . '/dashboard.php');
             }
 
             // Fail path - record failed attempt
             try {
-                Security::recordAttempt($ip, false, $email);
+                Security::recordAttempt($ip, false, $attemptIdentifier);
             } catch (Exception $e) {
                 error_log("Failed to record failed login attempt: " . $e->getMessage());
             }
-            setFlashMessage('error', 'Invalid email or password.');
+            $reason = $this->debugLoginReason($email, $username, $password);
+            setFlashMessage('error', 'Invalid username/email or password. Debug: ' . $reason);
             redirect(BASE_URL . '/login.php');
 
         } catch (Exception $e) {
             // Avoid leaking internals; log server-side if needed
             try {
-                Security::recordAttempt($ip, false, $email);
+                Security::recordAttempt($ip, false, $email !== '' ? $email : $username);
             } catch (Exception $secException) {
                 error_log("Failed to record failed login attempt: " . $secException->getMessage());
             }
@@ -101,7 +114,7 @@ class AuthController {
     /** Show registration form */
     public function showRegister() {
         if (isLoggedIn()) redirect(BASE_URL . '/dashboard.php');
-        include '../src/views/auth/register.php';
+        include 'src/views/auth/register.php';
     }
 
     /** Process registration */
@@ -223,5 +236,42 @@ class AuthController {
         }
         
         return '0.0.0.0';
+    }
+
+    private function debugLoginReason(string $email, string $username, string $password): string {
+        try {
+            $identifier = $email !== '' ? $email : $username;
+            $user = $email !== ''
+                ? $this->userModel->findByEmail($email)
+                : (method_exists($this->userModel, 'findByUsername') ? $this->userModel->findByUsername($username) : false);
+
+            if (!$user) {
+                return 'account_not_found(' . $identifier . ')';
+            }
+
+            $status = strtolower(trim((string)($user['status'] ?? '')));
+            if ($status !== '' && $status !== 'active' && $status !== '1') {
+                return 'account_inactive(status=' . $status . ')';
+            }
+
+            $storedHash = '';
+            if (isset($user['password_hash'])) {
+                $storedHash = (string)$user['password_hash'];
+            } elseif (isset($user['password'])) {
+                $storedHash = (string)$user['password'];
+            }
+
+            if ($storedHash === '') {
+                return 'missing_password_hash';
+            }
+
+            if (!password_verify($password, $storedHash)) {
+                return 'password_mismatch';
+            }
+
+            return 'credentials_verify_ok_but_auth_failed';
+        } catch (Exception $e) {
+            return 'debug_exception';
+        }
     }
 }

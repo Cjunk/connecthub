@@ -1,0 +1,10 @@
+# INCLUDE THE BELOW php script at the top of the <body> element in your index.php/index script ensuring to replace the $websiteName with the correct ID. 
+
+# Ensure this ID is first added to the database, and also added to websiteIDs.php
+
+    <?php
+    include '../php/log_website_visit.php';
+    $websiteName  = "NEZBALLOONS";  // Set the website ID based on your application logic
+    logVisit($conn, $websiteName );
+    $conn->close();
+?>

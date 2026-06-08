@@ -15,8 +15,7 @@ class Payment {
      */
     public function create($data) {
         $sql = "INSERT INTO payments (user_id, amount, currency, type, status, stripe_payment_intent_id, description) 
-                VALUES (:user_id, :amount, :currency, :type, :status, :stripe_id, :description) 
-                RETURNING id";
+            VALUES (:user_id, :amount, :currency, :type, :status, :stripe_id, :description)";
         
         $params = [
             ':user_id' => $data['user_id'],
@@ -28,8 +27,14 @@ class Payment {
             ':description' => $data['description'] ?? null
         ];
         
-        $result = $this->db->fetch($sql, $params);
-        return $result['id'];
+        $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'pgsql') {
+            $result = $this->db->fetch($sql . ' RETURNING id', $params);
+            return (int)$result['id'];
+        }
+
+        $this->db->query($sql, $params);
+        return (int)$this->db->lastInsertId();
     }
     
     /**
@@ -100,10 +105,9 @@ class Payment {
             
             // If it's a membership payment, update user's membership
             if ($payment['type'] === 'membership') {
-                $userModel = new User();
                 $membershipExpires = date('Y-m-d H:i:s', strtotime('+1 year'));
-                
-                $sql = "UPDATE users SET membership_expires = :expires, updated_at = CURRENT_TIMESTAMP WHERE id = :user_id";
+
+                $sql = "UPDATE users SET " . $this->membershipExpiresColumn() . " = :expires, updated_at = CURRENT_TIMESTAMP WHERE id = :user_id";
                 $this->db->query($sql, [
                     ':expires' => $membershipExpires,
                     ':user_id' => $payment['user_id']
@@ -132,8 +136,8 @@ class Payment {
         
         // Monthly revenue
         $sql = "SELECT SUM(amount) as monthly_revenue FROM payments 
-                WHERE status = 'completed' 
-                AND created_at >= DATE_TRUNC('month', CURRENT_DATE)";
+            WHERE status = 'completed' 
+            AND created_at >= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')";
         $result = $this->db->fetch($sql);
         $stats['monthly_revenue'] = $result['monthly_revenue'] ?? 0;
         
@@ -144,7 +148,7 @@ class Payment {
         
         // Active memberships
         $sql = "SELECT COUNT(*) as active_memberships FROM users 
-                WHERE membership_expires > CURRENT_TIMESTAMP";
+            WHERE " . $this->membershipExpiresColumn() . " > CURRENT_TIMESTAMP";
         $result = $this->db->fetch($sql);
         $stats['active_memberships'] = $result['active_memberships'] ?? 0;
         
@@ -155,11 +159,21 @@ class Payment {
      * Get recent payments for admin dashboard
      */
     public function getRecentPayments($limit = 10) {
-        $sql = "SELECT p.*, u.name as user_name, u.email as user_email 
+        $sql = "SELECT p.*, COALESCE(NULLIF(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')), ' '), u.username, u.email) as user_name, u.email as user_email 
                 FROM payments p 
                 JOIN users u ON p.user_id = u.id 
                 ORDER BY p.created_at DESC 
                 LIMIT :limit";
         return $this->db->fetchAll($sql, [':limit' => $limit]);
+    }
+
+    private function membershipExpiresColumn(): string {
+        $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'pgsql') {
+            $check = $this->db->fetch("SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'membership_expires' LIMIT 1");
+        } else {
+            $check = $this->db->fetch("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'membership_expires' LIMIT 1");
+        }
+        return $check ? 'membership_expires' : 'membership_expires_at';
     }
 }

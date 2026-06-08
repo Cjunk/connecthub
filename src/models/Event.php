@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../config/database.php';
 
 class Event {
     private $db;
+    private $userColumns = null;
     
     public function __construct() {
         $this->db = Database::getInstance();
@@ -63,8 +64,8 @@ class Event {
      */
     public function getAll($filters = []) {
         $sql = "SELECT e.*, g.name as group_name, g.slug as group_slug,
-                       u.name as organizer_name,
-                       COUNT(ea.id) FILTER (WHERE ea.status = 'going') as attendee_count
+                       u.email as organizer_name,
+                       SUM(CASE WHEN ea.status = 'going' THEN 1 ELSE 0 END) as attendee_count
                 FROM events e 
                 LEFT JOIN groups g ON e.group_id = g.id
                 LEFT JOIN users u ON e.created_by = u.id
@@ -85,7 +86,7 @@ class Event {
         }
         
         if (!empty($filters['search'])) {
-            $sql .= " AND (e.title ILIKE :search OR e.description ILIKE :search)";
+            $sql .= " AND (LOWER(e.title) LIKE LOWER(:search) OR LOWER(e.description) LIKE LOWER(:search))";
             $params[':search'] = '%' . $filters['search'] . '%';
         }
         
@@ -103,7 +104,7 @@ class Event {
             $sql .= " AND e.event_date >= CURRENT_DATE";
         }
         
-        $sql .= " GROUP BY e.id, g.name, g.slug, u.name
+        $sql .= " GROUP BY e.id, g.name, g.slug, u.email
                   ORDER BY e.event_date ASC, e.start_time ASC";
         
         if (!empty($filters['limit'])) {
@@ -119,9 +120,9 @@ class Event {
      */
     public function getById($id) {
         $sql = "SELECT e.*, g.name as group_name, g.slug as group_slug,
-                       u.name as organizer_name, u.email as organizer_email,
-                       COUNT(ea.id) FILTER (WHERE ea.status = 'going') as attendee_count,
-                       COUNT(ea.id) FILTER (WHERE ea.status = 'maybe') as maybe_count
+                       u.email as organizer_name, u.email as organizer_email,
+                       SUM(CASE WHEN ea.status = 'going' THEN 1 ELSE 0 END) as attendee_count,
+                       SUM(CASE WHEN ea.status = 'maybe' THEN 1 ELSE 0 END) as maybe_count
                 FROM events e 
                 LEFT JOIN groups g ON e.group_id = g.id
                 LEFT JOIN users u ON e.created_by = u.id
@@ -130,7 +131,7 @@ class Event {
                 GROUP BY e.id, e.title, e.description, e.event_date, e.start_time, e.end_time, 
                          e.location_type, e.venue_name, e.venue_address, e.online_link, e.max_attendees, 
                          e.cover_image, e.slug, e.status, e.group_id, e.created_by, e.created_at, e.updated_at,
-                         g.name, g.slug, u.name, u.email";
+                         g.name, g.slug, u.email";
         
         return $this->db->fetch($sql, [':id' => $id]);
     }
@@ -140,9 +141,9 @@ class Event {
      */
     public function getBySlug($slug) {
         $sql = "SELECT e.*, g.name as group_name, g.slug as group_slug,
-                       u.name as organizer_name, u.email as organizer_email,
-                       COUNT(ea.id) FILTER (WHERE ea.status = 'going') as attendee_count,
-                       COUNT(ea.id) FILTER (WHERE ea.status = 'maybe') as maybe_count
+                       u.email as organizer_name, u.email as organizer_email,
+                       SUM(CASE WHEN ea.status = 'going' THEN 1 ELSE 0 END) as attendee_count,
+                       SUM(CASE WHEN ea.status = 'maybe' THEN 1 ELSE 0 END) as maybe_count
                 FROM events e 
                 LEFT JOIN groups g ON e.group_id = g.id
                 LEFT JOIN users u ON e.created_by = u.id
@@ -151,7 +152,7 @@ class Event {
                 GROUP BY e.id, e.title, e.description, e.event_date, e.start_time, e.end_time, 
                          e.location_type, e.venue_name, e.venue_address, e.online_link, e.max_attendees, 
                          e.cover_image, e.slug, e.status, e.group_id, e.created_by, e.created_at, e.updated_at,
-                         g.name, g.slug, u.name, u.email";
+                         g.name, g.slug, u.email";
         
         return $this->db->fetch($sql, [':slug' => $slug]);
     }
@@ -162,13 +163,13 @@ class Event {
     public function getByGroupId($groupId, $includeAll = false) {
         $statusFilter = $includeAll ? "" : "AND e.status = 'published'";
         
-        $sql = "SELECT e.*, u.name as organizer_name,
-                       COUNT(ea.id) FILTER (WHERE ea.status = 'going') as attendee_count
+        $sql = "SELECT e.*, u.email as organizer_name,
+                       SUM(CASE WHEN ea.status = 'going' THEN 1 ELSE 0 END) as attendee_count
                 FROM events e 
                 LEFT JOIN users u ON e.created_by = u.id
                 LEFT JOIN event_attendees ea ON e.id = ea.event_id
                 WHERE e.group_id = :group_id {$statusFilter}
-                GROUP BY e.id, u.name
+            GROUP BY e.id, u.email
                 ORDER BY e.event_date ASC, e.start_time ASC";
         
         return $this->db->fetchAll($sql, [':group_id' => $groupId]);
@@ -179,13 +180,13 @@ class Event {
      */
     public function getUpcomingForUser($userId, $limit = 5) {
         $sql = "SELECT e.*, g.name as group_name, g.slug as group_slug,
-                       COUNT(ea.id) FILTER (WHERE ea.status = 'going') as attendee_count,
+                       SUM(CASE WHEN ea.status = 'going' THEN 1 ELSE 0 END) as attendee_count,
                        user_rsvp.status as user_rsvp_status
                 FROM events e 
                 JOIN groups g ON e.group_id = g.id
                 JOIN group_memberships gm ON g.id = gm.group_id
                 LEFT JOIN event_attendees ea ON e.id = ea.event_id
-                LEFT JOIN event_attendees user_rsvp ON e.id = user_rsvp.event_id AND user_rsvp.user_id = :user_id
+                LEFT JOIN event_attendees user_rsvp ON e.id = user_rsvp.event_id AND user_rsvp.user_id = :user_id_rsvp
                 WHERE gm.user_id = :user_id 
                 AND gm.status = 'active'
                 AND e.status = 'published'
@@ -196,6 +197,7 @@ class Event {
         
         return $this->db->fetchAll($sql, [
             ':user_id' => $userId,
+            ':user_id_rsvp' => $userId,
             ':limit' => $limit
         ]);
     }
@@ -234,7 +236,7 @@ class Event {
      * Get event attendees
      */
     public function getAttendees($eventId, $status = null) {
-        $sql = "SELECT u.id, u.name, u.email, ea.status, ea.registered_at, ea.notes
+        $sql = "SELECT u.id, " . $this->attendeeNameExpression() . " as name, u.email, ea.status, ea.registered_at, ea.notes
                 FROM event_attendees ea
                 JOIN users u ON ea.user_id = u.id
                 WHERE ea.event_id = :event_id";
@@ -249,6 +251,49 @@ class Event {
         $sql .= " ORDER BY ea.registered_at ASC";
         
         return $this->db->fetchAll($sql, $params);
+    }
+
+    private function attendeeNameExpression() {
+        if ($this->hasUserColumn('name')) {
+            return "COALESCE(NULLIF(u.name, ''), u.email)";
+        }
+
+        if ($this->hasUserColumn('first_name') || $this->hasUserColumn('last_name')) {
+            if ($this->hasUserColumn('username')) {
+                return "COALESCE(NULLIF(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')), ' '), u.username, u.email)";
+            }
+            return "COALESCE(NULLIF(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')), ' '), u.email)";
+        }
+
+        if ($this->hasUserColumn('username')) {
+            return "COALESCE(NULLIF(u.username, ''), u.email)";
+        }
+
+        return "u.email";
+    }
+
+    private function hasUserColumn($columnName) {
+        return in_array($columnName, $this->getUserColumns(), true);
+    }
+
+    private function getUserColumns() {
+        if ($this->userColumns !== null) {
+            return $this->userColumns;
+        }
+
+        $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'pgsql') {
+            $sql = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users'";
+        } else {
+            $sql = "SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users'";
+        }
+
+        $rows = $this->db->fetchAll($sql);
+        $this->userColumns = array_map(static function ($row) {
+            return $row['column_name'];
+        }, $rows);
+
+        return $this->userColumns;
     }
     
     /**

@@ -1,0 +1,15 @@
+# Always force HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Remove .php from URLs
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
+
+# Friendly URLs for login/dashboard/logout
+RewriteRule ^login$ login.php [L]
+RewriteRule ^dashboard$ index.php [L]
+RewriteRule ^logout$ logout.php [L]
+

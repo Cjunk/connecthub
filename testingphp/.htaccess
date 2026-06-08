@@ -1,0 +1,3 @@
+SetEnv DB_USER "jericho_user"
+SetEnv DB_PASS "password1password2"
+SetEnv DB_NAME "WEBSITE_STATS"

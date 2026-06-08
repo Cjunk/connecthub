@@ -49,7 +49,7 @@ if (APP_DEBUG) {
     ini_set('display_errors', 0);
 }
 
-// Autoloader for classes
+// Autoloader for classes (tries exact case first, then lowercase for legacy filenames)
 spl_autoload_register(function ($class) {
     $directories = [
         APP_PATH . '/models/',
@@ -57,12 +57,18 @@ spl_autoload_register(function ($class) {
         APP_PATH . '/services/',
         ROOT_PATH . '/config/'
     ];
-    
+
     foreach ($directories as $directory) {
-        $file = $directory . $class . '.php';
-        if (file_exists($file)) {
-            require_once $file;
-            return;
+        $candidates = [
+            $directory . $class . '.php',
+            $directory . strtolower($class) . '.php'
+        ];
+
+        foreach ($candidates as $file) {
+            if (file_exists($file)) {
+                require_once $file;
+                return;
+            }
         }
     }
 });

@@ -1,0 +1,22 @@
+<?php
+/**
+ * Production configuration (distribution template)
+ * Copy this file to production_config.php and fill in the real values on the server only.
+ */
+
+define('APP_ENV', 'production');
+define('APP_DEBUG', false);
+
+define('BASE_URL', 'https://your-domain.com');
+define('SITE_URL', BASE_URL);
+
+define('DB_HOST', 'localhost');
+// Include cPanel prefix on GoDaddy shared hosting: prefix_uhura_dbase
+define('DB_NAME', 'prefix_uhura_dbase');
+// Use your actual MySQL username (often with prefix_)
+define('DB_USER', 'prefix_dbuser');
+// Set the strong password on the server only
+define('DB_PASS', 'REPLACE_ME');
+define('DB_PORT', 3306);
+
+define('DB_CHARSET', 'utf8mb4');

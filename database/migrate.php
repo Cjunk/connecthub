@@ -4,8 +4,9 @@
  * Run this script to set up rate limiting functionality
  */
 
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../config/bootstrap.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../config/constants.php';
+require_once ROOT_PATH . '/config/bootstrap.php';
 
 echo "Running login_attempts table migration...\n";
 

@@ -158,19 +158,32 @@ connecthub/
 ├── config/                 # Configuration files
 │   ├── constants.php      # Application constants
 │   ├── database.php       # Database connection
-│   └── bootstrap.php      # App initialization
+│   ├── bootstrap.php      # App initialization
+│   ├── paths.php          # Central path definitions
+│   ├── local_config.php   # Local environment config
+│   └── production_config.php # Production environment config
 ├── src/                   # Application source code
 │   ├── controllers/       # Request handlers
 │   ├── models/           # Data models
 │   ├── views/            # Templates
 │   └── helpers/          # Utility functions
-├── public/               # Web-accessible files
-│   ├── assets/          # CSS, JS, images
-│   └── uploads/         # User uploaded files
-├── database/            # Database migrations and seeds
-├── docs/               # Documentation
+├── auth/                  # Authentication pages
+├── payment/               # Payment processing
+├── assets/                # CSS, JS, images
+├── uploads/               # User uploaded files
+├── database/              # Database migrations and seeds
+├── api/                   # API endpoints
+├── .vscode/               # VS Code configuration
+├── index.php              # Main entry point
+├── events.php             # Events listing
+├── groups.php             # Groups listing
+├── login.php              # Login page
+├── register.php           # Registration page
+├── dashboard.php          # User dashboard
 └── README.md
 ```
+
+**Note**: The project uses a flat structure where web files are in the root directory, matching the production `public_html` structure. This enables seamless SFTP deployment. Use VS Code's `files.exclude` to hide web files during development.
 
 ## 🔒 Security Features
 

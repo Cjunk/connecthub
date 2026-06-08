@@ -115,6 +115,48 @@ function getCurrentUser() {
 }
 
 /**
+ * Resolve a display name across mixed schemas.
+ */
+function getUserDisplayName($user) {
+    if (!is_array($user) || empty($user)) {
+        return 'User';
+    }
+
+    $name = trim((string)($user['name'] ?? ''));
+    if ($name !== '') {
+        return $name;
+    }
+
+    $firstName = trim((string)($user['first_name'] ?? ''));
+    $lastName = trim((string)($user['last_name'] ?? ''));
+    $combined = trim($firstName . ' ' . $lastName);
+    if ($combined !== '') {
+        return $combined;
+    }
+
+    $username = trim((string)($user['username'] ?? ''));
+    if ($username !== '') {
+        return $username;
+    }
+
+    $email = trim((string)($user['email'] ?? ''));
+    if ($email !== '') {
+        return $email;
+    }
+
+    return 'User';
+}
+
+/**
+ * Get first token from display name for compact UI labels.
+ */
+function getUserFirstName($user) {
+    $displayName = getUserDisplayName($user);
+    $parts = preg_split('/\s+/', trim($displayName));
+    return $parts[0] ?? 'User';
+}
+
+/**
  * Check if user has specific role
  */
 function hasRole($role) {

@@ -8,6 +8,8 @@ require_once __DIR__ . '/../../config/database.php';
 
 class Group {
     private $db;
+    private $groupColumns = null;
+    private $userColumns = null;
     
     public function __construct() {
         $this->db = Database::getInstance();
@@ -61,40 +63,59 @@ class Group {
      * Get all groups with optional filtering
      */
     public function getAll($filters = []) {
-        $sql = "SELECT g.*, gc.name as category_name, gc.icon as category_icon, gc.color as category_color,
-                       u.name as creator_name,
-                       COUNT(gm.id) as member_count
-                FROM groups g 
-                LEFT JOIN group_categories gc ON g.category = gc.name
+        $sql = "SELECT g.*, NULL as category_name, NULL as category_icon, NULL as category_color,
+                       " . $this->creatorNameExpression() . " as creator_name,
+                       (
+                           SELECT COUNT(gm.id)
+                           FROM group_memberships gm
+                           WHERE gm.group_id = g.id AND " . $this->activeStatusCondition('gm.status') . "
+                       ) as member_count
+                FROM groups g
                 LEFT JOIN users u ON g.created_by = u.id
-                LEFT JOIN group_memberships gm ON g.id = gm.group_id AND gm.status = 'active'
-                WHERE g.status = 'active'";
+                WHERE " . $this->activeStatusCondition('g.status');
         
         $params = [];
         
         // Add filters
         if (!empty($filters['category'])) {
-            $sql .= " AND g.category = :category";
-            $params[':category'] = $filters['category'];
+            if ($this->hasGroupColumn('category_id') && isset($filters['category_id'])) {
+                $sql .= " AND g.category_id = :category_id";
+                $params[':category_id'] = $filters['category_id'];
+            } elseif ($this->hasGroupColumn('category')) {
+                $sql .= " AND g.category = :category";
+                $params[':category'] = $filters['category'];
+            } else {
+                $sql .= " AND g.category_id = :category";
+                $params[':category'] = $filters['category'];
+            }
         }
         
         if (!empty($filters['privacy'])) {
-            $sql .= " AND g.privacy_level = :privacy";
+            if ($this->hasGroupColumn('privacy')) {
+                $sql .= " AND g.privacy = :privacy";
+            } else {
+                $sql .= " AND g.privacy_level = :privacy";
+            }
             $params[':privacy'] = $filters['privacy'];
         }
         
         if (!empty($filters['search'])) {
-            $sql .= " AND (g.name ILIKE :search OR g.description ILIKE :search)";
+            $sql .= " AND (LOWER(g.name) LIKE LOWER(:search) OR LOWER(g.description) LIKE LOWER(:search))";
             $params[':search'] = '%' . $filters['search'] . '%';
         }
         
         if (!empty($filters['location'])) {
-            $sql .= " AND g.location ILIKE :location";
+            if ($this->hasGroupColumn('location')) {
+                $sql .= " AND LOWER(COALESCE(g.location, '')) LIKE LOWER(:location)";
+            } else {
+                $sql .= " AND (LOWER(COALESCE(g.location_city, '')) LIKE LOWER(:location)
+                            OR LOWER(COALESCE(g.location_state, '')) LIKE LOWER(:location)
+                            OR LOWER(COALESCE(g.location_country, '')) LIKE LOWER(:location))";
+            }
             $params[':location'] = '%' . $filters['location'] . '%';
         }
         
-        $sql .= " GROUP BY g.id, gc.name, gc.icon, gc.color, u.name
-                  ORDER BY g.created_at DESC";
+        $sql .= " ORDER BY g.created_at DESC";
         
         if (!empty($filters['limit'])) {
             $sql .= " LIMIT :limit";
@@ -108,15 +129,16 @@ class Group {
      * Get group by ID
      */
     public function getById($id) {
-        $sql = "SELECT g.*, gc.name as category_name, gc.icon as category_icon, gc.color as category_color,
-                       u.name as creator_name, u.email as creator_email,
-                       COUNT(gm.id) as member_count
-                FROM groups g 
-                LEFT JOIN group_categories gc ON g.category = gc.name
-                LEFT JOIN users u ON g.created_by = u.id
-                LEFT JOIN group_memberships gm ON g.id = gm.group_id AND gm.status = 'active'
-                WHERE g.id = :id AND g.status = 'active'
-                GROUP BY g.id, gc.name, gc.icon, gc.color, u.name, u.email";
+                 $sql = "SELECT g.*, NULL as category_name, NULL as category_icon, NULL as category_color,
+                                    " . $this->creatorNameExpression() . " as creator_name, u.email as creator_email,
+                                    (
+                                            SELECT COUNT(gm.id)
+                                            FROM group_memberships gm
+                                            WHERE gm.group_id = g.id AND " . $this->activeStatusCondition('gm.status') . "
+                                    ) as member_count
+                                FROM groups g
+                                LEFT JOIN users u ON g.created_by = u.id
+                                WHERE g.id = :id AND " . $this->activeStatusCondition('g.status');
         
         return $this->db->fetch($sql, [':id' => $id]);
     }
@@ -125,17 +147,83 @@ class Group {
      * Get group by slug
      */
     public function getBySlug($slug) {
-        $sql = "SELECT g.*, gc.name as category_name, gc.icon as category_icon, gc.color as category_color,
-                       u.name as creator_name, u.email as creator_email,
-                       COUNT(gm.id) as member_count
-                FROM groups g 
-                LEFT JOIN group_categories gc ON g.category = gc.name
+         $sql = "SELECT g.*, NULL as category_name, NULL as category_icon, NULL as category_color,
+                  " . $this->creatorNameExpression() . " as creator_name, u.email as creator_email,
+                  (
+                      SELECT COUNT(gm.id)
+                      FROM group_memberships gm
+                      WHERE gm.group_id = g.id AND " . $this->activeStatusCondition('gm.status') . "
+                  ) as member_count
+                FROM groups g
                 LEFT JOIN users u ON g.created_by = u.id
-                LEFT JOIN group_memberships gm ON g.id = gm.group_id AND gm.status = 'active'
-                WHERE g.slug = :slug AND g.status = 'active'
-                GROUP BY g.id, gc.name, gc.icon, gc.color, u.name, u.email";
+                WHERE g.slug = :slug AND " . $this->activeStatusCondition('g.status');
         
         return $this->db->fetch($sql, [':slug' => $slug]);
+    }
+
+    private function activeStatusCondition($column) {
+        $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $castType = $driver === 'pgsql' ? 'TEXT' : 'CHAR';
+        return "LOWER(CAST(" . $column . " AS " . $castType . ")) IN ('active', '1')";
+    }
+
+    private function creatorNameExpression() {
+        if ($this->hasUserColumn('first_name') || $this->hasUserColumn('last_name')) {
+            if ($this->hasUserColumn('username')) {
+                return "COALESCE(NULLIF(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')), ' '), u.username, u.email)";
+            }
+            return "COALESCE(NULLIF(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')), ' '), u.email)";
+        }
+
+        if ($this->hasUserColumn('name')) {
+            return "COALESCE(NULLIF(u.name, ''), u.email)";
+        }
+
+        if ($this->hasUserColumn('username')) {
+            return "COALESCE(NULLIF(u.username, ''), u.email)";
+        }
+
+        return "u.email";
+    }
+
+    private function hasGroupColumn($columnName) {
+        return in_array($columnName, $this->getGroupColumns(), true);
+    }
+
+    private function hasUserColumn($columnName) {
+        return in_array($columnName, $this->getUserColumns(), true);
+    }
+
+    private function getGroupColumns() {
+        if ($this->groupColumns !== null) {
+            return $this->groupColumns;
+        }
+
+        $this->groupColumns = $this->readTableColumns('groups');
+        return $this->groupColumns;
+    }
+
+    private function getUserColumns() {
+        if ($this->userColumns !== null) {
+            return $this->userColumns;
+        }
+
+        $this->userColumns = $this->readTableColumns('users');
+        return $this->userColumns;
+    }
+
+    private function readTableColumns($tableName) {
+        $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'pgsql') {
+            $sql = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = :table_name";
+        } else {
+            $sql = "SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = :table_name";
+        }
+
+        $rows = $this->db->fetchAll($sql, [':table_name' => $tableName]);
+        return array_map(static function ($row) {
+            return $row['column_name'];
+        }, $rows);
     }
     
     /**
@@ -153,10 +241,17 @@ class Group {
             return $this->requestToJoin($groupId, $userId);
         }
         
-        $sql = "INSERT INTO group_memberships (user_id, group_id, role, status) 
+        $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'pgsql') {
+            $sql = "INSERT INTO group_memberships (user_id, group_id, role, status) 
                 VALUES (:user_id, :group_id, :role, 'active')
                 ON CONFLICT (user_id, group_id) 
                 DO UPDATE SET status = 'active', role = :role, joined_at = CURRENT_TIMESTAMP";
+        } else {
+            $sql = "INSERT INTO group_memberships (user_id, group_id, role, status)
+                VALUES (:user_id, :group_id, :role, 'active')
+                ON DUPLICATE KEY UPDATE status = 'active', role = VALUES(role), joined_at = CURRENT_TIMESTAMP";
+        }
         
         $params = [
             ':user_id' => $userId,
@@ -220,7 +315,7 @@ class Group {
                 FROM groups g
                 JOIN group_memberships gm ON g.id = gm.group_id
                 LEFT JOIN group_memberships gm2 ON g.id = gm2.group_id AND gm2.status = 'active'
-                WHERE gm.user_id = :user_id AND gm.status = 'active' AND g.status = 'active'
+                WHERE gm.user_id = :user_id AND gm.status = 'active' AND " . $this->activeStatusCondition('g.status') . "
                 GROUP BY g.id, gm.role, gm.joined_at
                 ORDER BY gm.joined_at DESC";
         
@@ -234,7 +329,7 @@ class Group {
         $sql = "SELECT COUNT(*) as count
                 FROM group_memberships gm
                 JOIN groups g ON gm.group_id = g.id
-                WHERE gm.user_id = :user_id AND gm.status = 'active' AND g.status = 'active'";
+                WHERE gm.user_id = :user_id AND gm.status = 'active' AND " . $this->activeStatusCondition('g.status');
         
         $result = $this->db->fetch($sql, [':user_id' => $userId]);
         return $result ? $result['count'] : 0;
@@ -244,7 +339,7 @@ class Group {
      * Get group members
      */
     public function getMembers($groupId) {
-        $sql = "SELECT u.id, u.name, u.email, gm.role, gm.joined_at
+        $sql = "SELECT u.id, " . $this->userDisplayExpression('u') . " as name, u.email, gm.role, gm.joined_at
                 FROM users u
                 JOIN group_memberships gm ON u.id = gm.user_id
                 WHERE gm.group_id = :group_id AND gm.status = 'active'
@@ -264,18 +359,26 @@ class Group {
      * Get all categories
      */
     public function getCategories() {
-        $sql = "SELECT * FROM group_categories WHERE is_active = true ORDER BY display_order, name";
-        return $this->db->fetchAll($sql);
+        // Some production schemas don't have group_categories yet.
+        // Return empty categories instead of failing the page.
+        return [];
     }
     
     /**
      * Request to join a private group
      */
     public function requestToJoin($groupId, $userId, $message = '') {
-        $sql = "INSERT INTO group_join_requests (user_id, group_id, message) 
-                VALUES (:user_id, :group_id, :message)
-                ON CONFLICT (user_id, group_id) 
-                DO UPDATE SET message = :message, requested_at = CURRENT_TIMESTAMP, status = 'pending'";
+        $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'pgsql') {
+            $sql = "INSERT INTO group_join_requests (user_id, group_id, message) 
+                    VALUES (:user_id, :group_id, :message)
+                    ON CONFLICT (user_id, group_id) 
+                    DO UPDATE SET message = :message, requested_at = CURRENT_TIMESTAMP, status = 'pending'";
+        } else {
+            $sql = "INSERT INTO group_join_requests (user_id, group_id, message)
+                    VALUES (:user_id, :group_id, :message)
+                    ON DUPLICATE KEY UPDATE message = VALUES(message), requested_at = CURRENT_TIMESTAMP, status = 'pending'";
+        }
         
         return $this->db->query($sql, [
             ':user_id' => $userId,
@@ -461,7 +564,7 @@ class Group {
      * Get group activity log
      */
     public function getActivityLog($groupId, $limit = 20) {
-        $sql = "SELECT gal.*, u.name as user_name
+        $sql = "SELECT gal.*, " . $this->userDisplayExpression('u') . " as user_name
                 FROM group_activity_log gal
                 JOIN users u ON gal.user_id = u.id
                 WHERE gal.group_id = :group_id
@@ -493,8 +596,8 @@ class Group {
      * Get group co-hosts and moderators for management display
      */
     public function getGroupManagers($groupId) {
-        $sql = "SELECT u.id, u.name, u.email, gm.role, gm.joined_at, gm.promoted_at,
-                       promoter.name as promoted_by_name
+        $sql = "SELECT u.id, " . $this->userDisplayExpression('u') . " as name, u.email, gm.role, gm.joined_at, gm.promoted_at,
+                       " . $this->userDisplayExpression('promoter') . " as promoted_by_name
                 FROM group_memberships gm
                 JOIN users u ON gm.user_id = u.id
                 LEFT JOIN users promoter ON gm.promoted_by = promoter.id
@@ -510,5 +613,24 @@ class Group {
                     gm.promoted_at ASC";
         
         return $this->db->fetchAll($sql, [':group_id' => $groupId]);
+    }
+
+    private function userDisplayExpression($alias) {
+        if ($this->hasUserColumn('first_name') || $this->hasUserColumn('last_name')) {
+            if ($this->hasUserColumn('username')) {
+                return "COALESCE(NULLIF(CONCAT(COALESCE(" . $alias . ".first_name, ''), ' ', COALESCE(" . $alias . ".last_name, '')), ' '), " . $alias . ".username, " . $alias . ".email)";
+            }
+            return "COALESCE(NULLIF(CONCAT(COALESCE(" . $alias . ".first_name, ''), ' ', COALESCE(" . $alias . ".last_name, '')), ' '), " . $alias . ".email)";
+        }
+
+        if ($this->hasUserColumn('name')) {
+            return "COALESCE(NULLIF(" . $alias . ".name, ''), " . $alias . ".email)";
+        }
+
+        if ($this->hasUserColumn('username')) {
+            return "COALESCE(NULLIF(" . $alias . ".username, ''), " . $alias . ".email)";
+        }
+
+        return $alias . ".email";
     }
 }

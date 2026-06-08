@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($pageTitle) ? $pageTitle . ' - ' . APP_NAME : APP_NAME; ?></title>
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23ffc107'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' fill='white'%3EC%3C/text%3E%3C/svg%3E">
-    <link rel="shortcut icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23ffc107'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' fill='white'%3EC%3C/text%3E%3C/svg%3E">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23ffc107'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' fill='white'%3EU%3C/text%3E%3C/svg%3E">
+    <link rel="shortcut icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23ffc107'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' fill='white'%3EU%3C/text%3E%3C/svg%3E">
     
     <!-- Performance Optimizations -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -491,11 +490,11 @@
             display: none;
         }
         
-        .navbar-logo:not([src*="logo.png"]), .navbar-logo[src=""] {
+        .navbar-logo:not([src*="uhura-logo.svg"]), .navbar-logo[src=""] {
             display: none;
         }
         
-        .navbar-logo:not([src*="logo.png"]) + .fallback-icon, 
+        .navbar-logo:not([src*="uhura-logo.svg"]) + .fallback-icon, 
         .navbar-logo[src=""] + .fallback-icon {
             display: inline-block;
         }
@@ -629,6 +628,24 @@
     <!-- Dark Mode JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+                function updateNavStackHeight() {
+                    const nav = document.querySelector('nav.fixed-top');
+                    if (!nav) {
+                        return;
+                    }
+                    const navHeight = Math.ceil(nav.getBoundingClientRect().height);
+                    document.documentElement.style.setProperty('--nav-stack-height', navHeight + 'px');
+                }
+
+                updateNavStackHeight();
+                window.addEventListener('resize', updateNavStackHeight);
+
+                const navCollapse = document.getElementById('navbarNav');
+                if (navCollapse) {
+                    navCollapse.addEventListener('shown.bs.collapse', updateNavStackHeight);
+                    navCollapse.addEventListener('hidden.bs.collapse', updateNavStackHeight);
+                }
+
             const darkModeToggle = document.getElementById('darkModeToggle');
             const darkModeIcon = document.getElementById('darkModeIcon');
             const body = document.body;
@@ -696,8 +713,8 @@
     <!-- Navigation -->
     <nav class="fixed-top navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="<?php echo BASE_URL; ?>">
-                <img src="assets/images/logo.png" alt="ConnectHub Logo" class="navbar-logo me-2" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+            <a class="navbar-brand" href="<?php echo isLoggedIn() ? BASE_URL . '/dashboard.php' : BASE_URL; ?>">
+                <img src="assets/images/uhura-logo.svg" alt="Uhura Logo" class="navbar-logo me-2" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
                 <i class="fas fa-users me-2 fallback-icon" style="display: none;"></i><?php echo APP_NAME; ?>
             </a>
             
@@ -760,10 +777,11 @@
                     
                     <?php if (isLoggedIn()): ?>
                         <?php $currentUser = getCurrentUser(); ?>
+                        <?php $navbarFirstName = getUserFirstName($currentUser); ?>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user-circle me-1"></i>
-                                <?php echo htmlspecialchars(explode(' ', $currentUser['name'])[0]); ?>
+                                <?php echo htmlspecialchars($navbarFirstName); ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/under-construction.php">

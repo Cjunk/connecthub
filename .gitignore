@@ -4,6 +4,9 @@ config/.env
 .env
 .env.local
 .env.production
+.env.production.local
+.env.*.local
+production_config.php
 
 # Database dumps with sensitive data
 database/backups/

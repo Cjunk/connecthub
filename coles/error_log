@@ -1,0 +1,12 @@
+[04-Oct-2025 10:29:49 UTC] PHP Warning:  require_once(/home/phnk96925bbc/public_html/coles/includes/config.php): Failed to open stream: No such file or directory in /home/phnk96925bbc/public_html/coles/includes/auth.php on line 7
+[04-Oct-2025 10:29:49 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/phnk96925bbc/public_html/coles/includes/config.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/phnk96925bbc/public_html/coles/includes/auth.php:7
+Stack trace:
+#0 /home/phnk96925bbc/public_html/coles/index.php(6): require_once()
+#1 {main}
+  thrown in /home/phnk96925bbc/public_html/coles/includes/auth.php on line 7
+[04-Oct-2025 11:24:03 UTC] PHP Parse error:  syntax error, unexpected token "<", expecting end of file in /home/phnk96925bbc/public_html/coles/shift.php on line 13
+[04-Oct-2025 11:24:31 UTC] PHP Parse error:  syntax error, unexpected token "<", expecting end of file in /home/phnk96925bbc/public_html/coles/shift.php on line 13
+[04-Oct-2025 11:34:37 UTC] Login failed for user: admin - Error: Invalid username or password
+[04-Oct-2025 11:35:36 UTC] Login failed for user: admin - Error: Invalid username or password
+[04-Oct-2025 11:40:01 UTC] Login failed for user: admin - Error: Invalid username or password
+[04-Oct-2025 11:43:10 UTC] Login failed for user: admin - Error: Invalid username or password

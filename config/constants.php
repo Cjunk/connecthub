@@ -4,19 +4,35 @@
  * Central location for all application constants
  */
 
+// Load .env first (defaults), then decide which config to load based on APP_ENV
+require_once __DIR__ . '/env_loader.php';
+EnvLoader::loadDefaults();
+
 // Load configuration based on environment
 $localConfigFile = __DIR__ . '/local_config.php';
 $productionConfigFile = dirname(__DIR__) . '/production_config.php';
 
-// Check for local development config first
-if (file_exists($localConfigFile)) {
-    require_once $localConfigFile;
-} elseif (file_exists($productionConfigFile)) {
-    require_once $productionConfigFile;
+// Determine environment early (from .env if set)
+if (!defined('APP_ENV')) {
+    define('APP_ENV', $_ENV['APP_ENV'] ?? 'development');
 }
 
+// Load environment-specific config file
+if (APP_ENV === 'production') {
+    if (file_exists($productionConfigFile)) {
+        require_once $productionConfigFile;
+    }
+} else {
+    if (file_exists($localConfigFile)) {
+        require_once $localConfigFile;
+    }
+}
+
+// After config files, load environment-specific .env overrides
+EnvLoader::loadForAppEnv();
+
 // Application Settings
-define('APP_NAME', 'ConnectHub');
+define('APP_NAME', 'Uhura');
 define('APP_VERSION', '1.0.0');
 if (!defined('APP_ENV')) define('APP_ENV', 'development'); // Use config file value if available
 if (!defined('APP_DEBUG')) define('APP_DEBUG', true); // Use config file value if available
@@ -38,6 +54,7 @@ if (!defined('DB_HOST')) define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
 if (!defined('DB_NAME')) define('DB_NAME', $_ENV['DB_NAME'] ?? 'connecthub');
 if (!defined('DB_USER')) define('DB_USER', $_ENV['DB_USER'] ?? 'root');
 if (!defined('DB_PASS')) define('DB_PASS', $_ENV['DB_PASS'] ?? '');
+if (!defined('DB_PORT')) define('DB_PORT', (int)($_ENV['DB_PORT'] ?? 3306));
 define('DB_CHARSET', 'utf8mb4');
 
 // Security Settings

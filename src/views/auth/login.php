@@ -1,11 +1,11 @@
 <?php
-require_once '../config/constants.php';
-require_once '../config/bootstrap.php';
+require_once 'config/constants.php';
+require_once 'config/bootstrap.php';
 
 $pageTitle = 'Login';
 ?>
 
-<?php include '../src/views/layouts/header.php'; ?>
+<?php include 'src/views/layouts/header.php'; ?>
 
 <div class="container">
     <div class="row justify-content-center">
@@ -14,15 +14,18 @@ $pageTitle = 'Login';
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
                         <h2><i class="fas fa-sign-in-alt me-2"></i>Login</h2>
-                        <p class="text-muted">Welcome back to ConnectHub</p>
+                        <p class="text-muted d-flex align-items-center justify-content-center gap-2 mb-0">
+                            <img src="assets/images/uhura-logo.svg" alt="Uhura" style="width: 22px; height: 22px; object-fit: contain;" onerror="this.style.display='none'">
+                            <span style="font-weight: 600; letter-spacing: 0.02em;">Welcome back to Uhura</span>
+                        </p>
                     </div>
                     
                     <form method="POST" action="<?php echo BASE_URL; ?>/auth/login.php">
                         <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
+                            <label for="login" class="form-label">Username or Email</label>
+                            <input type="text" class="form-control" id="login" name="login" required autocomplete="username">
                         </div>
                         
                         <div class="mb-3">
@@ -55,4 +58,4 @@ $pageTitle = 'Login';
     </div>
 </div>
 
-<?php include '../src/views/layouts/footer.php'; ?>
+<?php include 'src/views/layouts/footer.php'; ?>

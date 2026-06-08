@@ -1,0 +1,52 @@
+# Deny access to PHP files in uploads directory
+<Files "*.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.phtml">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.pl">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.py">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.jsp">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.asp">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.sh">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.cgi">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Force download of uploaded files
+<FilesMatch ".*">
+    ForceType application/octet-stream
+    Header set Content-Disposition attachment
+</FilesMatch>
+
+# Allow images to be displayed normally
+<FilesMatch "\.(jpg|jpeg|png|gif|svg|webp)$">
+    ForceType none
+    Header unset Content-Disposition
+</FilesMatch>
