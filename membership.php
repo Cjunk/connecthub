@@ -36,7 +36,7 @@ $isNewUser = (new DateTime($currentUser['created_at']))->diff(new DateTime())->d
 
 ?>
 
-<?php include 'src/views/layouts/header.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/header.php'; ?>
 
 <div class="container">
     <div class="row justify-content-center">
@@ -278,4 +278,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include 'src/views/layouts/footer.php'; ?>
+<?php include __DIR__ . '/src/views/layouts/footer.php'; ?>
